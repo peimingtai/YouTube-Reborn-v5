@@ -6,6 +6,7 @@
 #import "ReorderPivotBarController.h"
 #import "ColourOptionsController.h"
 #import "ColourOptionsController2.h"
+#import "ColourOptionsController3.h"
 #import "PictureInPictureOptionsController.h"
 #import "ShortsOptionsController.h"
 #import "SponsorBlockOptionsController.h"
@@ -32,7 +33,10 @@
 
     self.title = @"YouTube Reborn";
 
-    UIBarButtonItem *searchButton = [[UIBarButtonItem alloc] initWithCustomView:self.searchBar];
+    self.searchBar = [[UISearchBar alloc] initWithFrame:CGRectMake(0, 0, CGRectGetWidth(self.view.frame), 44)];
+    self.searchBar.delegate = self;
+
+    UIBarButtonItem *searchButton = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemSearch target:self action:@selector(searchBarButtonPressed)];
     self.navigationItem.rightBarButtonItem = searchButton;
     self.filteredItems = [NSArray array];
     self.isSearching = NO;
@@ -40,7 +44,7 @@
     UIBarButtonItem *doneButton = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemDone target:self action:@selector(done)];
     self.navigationItem.leftBarButtonItem = doneButton;
 
-    UIBarButtonItem *applyButton = [[UIBarButtonItem alloc] initWithTitle:@"Apply" style:UIBarButtonItemStylePlain target:self action:@selector(apply)];
+    UIBarButtonItem *applyButton = [[UIBarButtonItem alloc] initWithTitle:LOC(@"APPLY_TEXT") style:UIBarButtonItemStylePlain target:self action:@selector(apply)];
     self.navigationItem.rightBarButtonItem = applyButton;
 
     UITableViewStyle style;
@@ -64,10 +68,28 @@
     ]];
 }
 
-- (void)searchBarSearchButtonClicked:(UISearchBar *)searchBar {
+- (void)searchBarTextDidBeginEditing:(UISearchBar *)searchBar {
+    UIBarButtonItem *cancelButton = [[UIBarButtonItem alloc] initWithTitle:LOC(@"CANCEL_TEXT") style:UIBarButtonItemStylePlain target:self action:@selector(cancelButtonPressed)];
+    self.navigationItem.rightBarButtonItem = cancelButton;
+}
+
+- (void)searchBarCancelButtonClicked:(UISearchBar *)searchBar {
     [searchBar resignFirstResponder];
+    self.navigationItem.rightBarButtonItem = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemSearch target:self action:@selector(searchBarButtonPressed)];
+}
+
+- (void)cancelButtonPressed {
+    self.navigationItem.rightBarButtonItem = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemSearch target:self action:@selector(searchBarButtonPressed)];
+    self.searchBar.text = @"";
+    self.isSearching = NO;
+    [self.tableView reloadData];
+    [self.searchBar resignFirstResponder];
+}
+
+- (void)searchBarSearchButtonClicked:(UISearchBar *)searchBar {
+    [self.searchBar resignFirstResponder];
     NSString *searchText = searchBar.text;
-    
+
     if (searchText.length > 0) {
         NSPredicate *predicate = [NSPredicate predicateWithFormat:@"SELF CONTAINS[cd] %@", searchText];
         self.filteredItems = [self.allItems filteredArrayUsingPredicate:predicate];
@@ -92,24 +114,24 @@
         }
     }
     if (section == 1) {
-        return 10;
+        return 11;
     }
     if (section == 2) {
         return 2;
     }
+    
+    if (self.isSearching) {
+        return self.filteredItems.count;
+    } else {
+        return self.allItems.count;
+    }
+    
     return 0;
 }
 
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath {
     static NSString *CellIdentifier = @"RootTableViewCell";
     UITableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:CellIdentifier];
-    NSString *item;
-    
-    if (self.isSearching) {
-        item = self.filteredItems[indexPath.row];
-    } else {
-        item = self.allItems[indexPath.row];
-    }
 
     if (cell == nil) {
         cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleSubtitle reuseIdentifier:@"cell"];
@@ -157,15 +179,18 @@
                 cell.textLabel.text = LOC(@"COLOR_OPTIONS_2");
             }
             if (indexPath.row == 6) {
-                cell.textLabel.text = LOC(@"PICTURE_IN_PICTURE_OPTIONS");
+                cell.textLabel.text = LOC(@"COLOR_OPTIONS_3");
             }
             if (indexPath.row == 7) {
-                cell.textLabel.text = LOC(@"SHORTS_OPTIONS");
+                cell.textLabel.text = LOC(@"PICTURE_IN_PICTURE_OPTIONS");
             }
             if (indexPath.row == 8) {
-                cell.textLabel.text = LOC(@"SPONSOR_BLOCK_OPTIONS");
+                cell.textLabel.text = LOC(@"SHORTS_OPTIONS");
             }
             if (indexPath.row == 9) {
+                cell.textLabel.text = LOC(@"SPONSOR_BLOCK_OPTIONS");
+            }
+            if (indexPath.row == 10) {
                 cell.textLabel.text = LOC(@"OTHER_OPTIONS");
             }
         }
@@ -248,6 +273,13 @@
             [self presentViewController:colourOptionsController2View animated:YES completion:nil];
         }
         if (indexPath.row == 6) {
+            ColourOptionsController3 *colourOptionsController3 = [[ColourOptionsController3 alloc] init];
+            UINavigationController *colourOptionsController3View = [[UINavigationController alloc] initWithRootViewController:colourOptionsController3];
+            colourOptionsController3View.modalPresentationStyle = UIModalPresentationFullScreen;
+
+            [self presentViewController:colourOptionsController3View animated:YES completion:nil];
+        }
+        if (indexPath.row == 7) {
             if (SYSTEM_VERSION_GREATER_THAN_OR_EQUAL_TO(@"15.0")) {
                 PictureInPictureOptionsController *pictureInPictureOptionsController = [[PictureInPictureOptionsController alloc] init];
                 UINavigationController *pictureInPictureOptionsControllerView = [[UINavigationController alloc] initWithRootViewController:pictureInPictureOptionsController];
@@ -263,21 +295,21 @@
                 [self presentViewController:alertError animated:YES completion:nil];
             }
         }
-        if (indexPath.row == 7) {
+        if (indexPath.row == 8) {
             ShortsOptionsController *shortsOptionsController = [[ShortsOptionsController alloc] init];
             UINavigationController *shortsOptionsControllerView = [[UINavigationController alloc] initWithRootViewController:shortsOptionsController];
             shortsOptionsControllerView.modalPresentationStyle = UIModalPresentationFullScreen;
 	    
             [self presentViewController:shortsOptionsControllerView animated:YES completion:nil];
         }
-        if (indexPath.row == 8) {
+        if (indexPath.row == 9) {
             SponsorBlockOptionsController *sponsorBlockOptionsController = [[SponsorBlockOptionsController alloc] init];
             UINavigationController *sponsorBlockOptionsControllerView = [[UINavigationController alloc] initWithRootViewController:sponsorBlockOptionsController];
             sponsorBlockOptionsControllerView.modalPresentationStyle = UIModalPresentationFullScreen;
 
             [self presentViewController:sponsorBlockOptionsControllerView animated:YES completion:nil];
         }
-        if (indexPath.row == 9) {
+        if (indexPath.row == 10) {
             OtherOptionsController *otherOptionsController = [[OtherOptionsController alloc] init];
             UINavigationController *otherOptionsControllerView = [[UINavigationController alloc] initWithRootViewController:otherOptionsController];
             otherOptionsControllerView.modalPresentationStyle = UIModalPresentationFullScreen;
@@ -357,6 +389,8 @@
 }
 
 - (void)apply {
+    [[UIApplication sharedApplication] performSelector:@selector(suspend)];
+    [NSThread sleepForTimeInterval:0.5];
     exit(0); 
 }
 

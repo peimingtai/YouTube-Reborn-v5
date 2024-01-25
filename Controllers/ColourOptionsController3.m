@@ -1,17 +1,17 @@
-#import "ColourOptionsController2.h"
+#import "ColourOptionsController3.h"
 #import "Localization.h"
 
-@interface ColourOptionsController2 ()
+@interface ColourOptionsController3 ()
 - (void)coloursView;
 @end
 
-@implementation ColourOptionsController2
+@implementation ColourOptionsController3
 
 - (void)loadView {
 	[super loadView];
     [self coloursView];
 
-    self.title = LOC(@"COLOR_OPTIONS_2");
+    self.title = LOC(@"COLOR_OPTIONS_3");
     
     UIBarButtonItem *doneButton = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemDone target:self action:@selector(done)];
     self.navigationItem.leftBarButtonItem = doneButton;
@@ -20,10 +20,10 @@
     self.navigationItem.rightBarButtonItem = saveButton;
 
     self.supportsAlpha = NO;
-    NSData *lcmColorData = [[NSUserDefaults standardUserDefaults] objectForKey:@"kYTLcmColourOptionVFive"];
-    NSKeyedUnarchiver *lcmUnarchiver = [[NSKeyedUnarchiver alloc] initForReadingFromData:lcmColorData error:nil];
-    [lcmUnarchiver setRequiresSecureCoding:NO];
-    UIColor *color = [lcmUnarchiver decodeObjectForKey:NSKeyedArchiveRootObjectKey];
+    NSData *progressbarColorData = [[NSUserDefaults standardUserDefaults] objectForKey:@"kYTProgreessBarColourOption"];
+    NSKeyedUnarchiver *progressbarUnarchiver = [[NSKeyedUnarchiver alloc] initForReadingFromData:progressbarColorData error:nil];
+    [progressbarUnarchiver setRequiresSecureCoding:NO];
+    UIColor *color = [progressbarUnarchiver decodeObjectForKey:NSKeyedArchiveRootObjectKey];
     self.selectedColor = color;
 }
 
@@ -47,15 +47,15 @@
 
 @end
 
-@implementation ColourOptionsController2(Privates)
+@implementation ColourOptionsController3(Privates)
 
 - (void)done {
     [self.presentingViewController dismissViewControllerAnimated:YES completion:nil];
 }
 
 - (void)save {
-    NSData *lcmColorData = [NSKeyedArchiver archivedDataWithRootObject:self.selectedColor requiringSecureCoding:nil error:nil];
-    [[NSUserDefaults standardUserDefaults] setObject:lcmColorData forKey:@"kYTLcmColourOptionVFive"];
+    NSData *progressbarColorData = [NSKeyedArchiver archivedDataWithRootObject:self.selectedColor requiringSecureCoding:nil error:nil];
+    [[NSUserDefaults standardUserDefaults] setObject:progressbarColorData forKey:@"kYTProgreessBarColourOption"];
     [[NSUserDefaults standardUserDefaults] synchronize];
 
     UIAlertController *alertSaved = [UIAlertController alertControllerWithTitle:LOC(@"COLOR_SAVED") message:nil preferredStyle:UIAlertControllerStyleAlert];

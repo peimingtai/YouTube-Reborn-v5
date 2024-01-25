@@ -1,4 +1,5 @@
 #import "StartupPageOptionsController.h"
+#import "Localization.h"
 
 @interface StartupPageOptionsController ()
 - (void)coloursView;
@@ -12,7 +13,7 @@ int selectedIndex;
     [super viewDidLoad];
     [self coloursView];
 
-    self.title = @"Startup Page Options";
+    self.title = LOC(@"STARTUP_PAGE");
 
     UIBarButtonItem *doneButton = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemDone target:self action:@selector(done)];
     self.navigationItem.rightBarButtonItem = doneButton;
@@ -61,43 +62,43 @@ int selectedIndex;
         cell.textLabel.adjustsFontSizeToFitWidth = YES;
         cell.detailTextLabel.adjustsFontSizeToFitWidth = YES;
         if (self.traitCollection.userInterfaceStyle == UIUserInterfaceStyleLight) {
-            cell.backgroundColor = [UIColor colorWithRed: 0.06 green: 0.06 blue: 0.06 alpha: 1.00];
+            cell.backgroundColor = [UIColor colorWithRed:0.949 green:0.949 blue:0.969 alpha:1.0];
             cell.textLabel.textColor = [UIColor blackColor];
             cell.detailTextLabel.textColor = [UIColor blackColor];
         }
         else {
-            cell.backgroundColor = [UIColor colorWithRed:0.110 green:0.110 blue:0.118 alpha:1.0];
+            cell.backgroundColor = [UIColor colorWithRed:0.0 green:0.0 blue:0.0 alpha:1.0];
             cell.textLabel.textColor = [UIColor whiteColor];
 	    cell.textLabel.shadowColor = [UIColor blackColor];
             cell.textLabel.shadowOffset = CGSizeMake(1.0, 1.0);
             cell.detailTextLabel.textColor = [UIColor whiteColor];
         }
         if (indexPath.row == 0) {
-            cell.textLabel.text = @"Home";
+            cell.textLabel.text = LOC(@"HOME_TEXT");
             if (selectedIndex == 0) {
                 cell.accessoryType = UITableViewCellAccessoryCheckmark;
             }
         }
         if (indexPath.row == 1) {
-            cell.textLabel.text = @"Explore";
+            cell.textLabel.text = LOC(@"EXPLORE_TEXT");
             if (selectedIndex == 1) {
                 cell.accessoryType = UITableViewCellAccessoryCheckmark;
             }
         }
         if (indexPath.row == 2) {
-            cell.textLabel.text = @"Shorts";
+            cell.textLabel.text = LOC(@"SHORTS_TEXT");
             if (selectedIndex == 2) {
                 cell.accessoryType = UITableViewCellAccessoryCheckmark;
             }
         }
         if (indexPath.row == 3) {
-            cell.textLabel.text = @"Subscriptions";
+            cell.textLabel.text = LOC(@"SUB_TEXT");
             if (selectedIndex == 3) {
                 cell.accessoryType = UITableViewCellAccessoryCheckmark;
             }
         }
         if (indexPath.row == 4) {
-            cell.textLabel.text = @"You";
+            cell.textLabel.text = LOC(@"YOU_TEXT");
             if (selectedIndex == 4) {
                 cell.accessoryType = UITableViewCellAccessoryCheckmark;
             }

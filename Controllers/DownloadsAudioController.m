@@ -1,4 +1,5 @@
 #import "DownloadsAudioController.h"
+#import "Localization.h"
 
 @interface DownloadsAudioController ()
 {
@@ -15,6 +16,14 @@
 - (void)viewDidLoad {
     [super viewDidLoad];
     [self coloursView];
+
+    self.searchBar = [[UISearchBar alloc] initWithFrame:CGRectMake(0, 0, CGRectGetWidth(self.view.frame), 44)];
+    self.searchBar.delegate = self;
+
+    UIBarButtonItem *searchButton = [[UIBarButtonItem alloc] initWithCustomView:self.searchBar];
+    self.navigationItem.rightBarButtonItem = searchButton;
+    self.filteredItems = [NSArray array];
+    self.isSearching = NO;
 
     UITableViewStyle style;
         if (@available(iOS 13, *)) {
@@ -38,12 +47,39 @@
     ]];
 }
 
+- (void)searchBarCancelButtonClicked:(UISearchBar *)searchBar {
+    searchBar.text = @"";
+    self.filteredItems = [NSArray array];
+    self.isSearching = NO;
+    [self.tableView reloadData];
+    [searchBar resignFirstResponder];
+}
+
+- (void)searchBarSearchButtonClicked:(UISearchBar *)searchBar {
+    [searchBar resignFirstResponder];
+    NSString *searchText = searchBar.text;
+
+    if (searchText.length > 0) {
+        NSPredicate *predicate = [NSPredicate predicateWithFormat:@"SELF BEGINSWITH[cd] %@", searchText];
+        self.filteredItems = [self.allItems filteredArrayUsingPredicate:predicate];
+        self.isSearching = YES;
+    } else {
+        self.filteredItems = [NSArray array];
+        self.isSearching = NO;
+    }
+    [self.tableView reloadData];
+}
+
 - (NSInteger)numberOfSectionsInTableView:(UITableView *)tableView {
     return 1;
 }
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section {
-    return [filePathsAudioArray count];
+    if (self.isSearching) {
+        return self.filteredItems.count;
+    } else {
+        return self.allItems.count;
+    }
 }
 
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath {
@@ -99,15 +135,15 @@
     NSString *currentAudioFileName = filePathsAudioArray[indexPath.row];
     NSString *currentArtworkFileName = filePathsAudioArtworkArray[indexPath.row];
 
-    UIAlertController *alertMenu = [UIAlertController alertControllerWithTitle:@"Options" message:nil preferredStyle:UIAlertControllerStyleAlert];
+    UIAlertController *alertMenu = [UIAlertController alertControllerWithTitle:LOC(@"OPTIONS_TEXT") message:nil preferredStyle:UIAlertControllerStyleAlert];
 
-    [alertMenu addAction:[UIAlertAction actionWithTitle:@"Delete Audio" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
+    [alertMenu addAction:[UIAlertAction actionWithTitle:LOC(@"DELETE_AUDIO") style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
         [[NSFileManager defaultManager] removeItemAtPath:[documentsDirectory stringByAppendingPathComponent:currentAudioFileName] error:nil];
         [[NSFileManager defaultManager] removeItemAtPath:[documentsDirectory stringByAppendingPathComponent:currentArtworkFileName] error:nil];
 
-        UIAlertController *alertDeleted = [UIAlertController alertControllerWithTitle:@"Notice" message:@"Audio Successfully Deleted" preferredStyle:UIAlertControllerStyleAlert];
+        UIAlertController *alertDeleted = [UIAlertController alertControllerWithTitle:LOC(@"NOTICE_TEXT") message:LOC(@"AUDIO_DELETED") preferredStyle:UIAlertControllerStyleAlert];
 
-        [alertDeleted addAction:[UIAlertAction actionWithTitle:@"Okay" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
+        [alertDeleted addAction:[UIAlertAction actionWithTitle:LOC(@"OKAY_TEXT") style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
             [filePathsAudioArray removeAllObjects];
             [filePathsAudioArtworkArray removeAllObjects];
             [self setupAudioArrays];
@@ -117,7 +153,7 @@
         [self presentViewController:alertDeleted animated:YES completion:nil];
     }]];
 
-    [alertMenu addAction:[UIAlertAction actionWithTitle:@"Cancel" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
+    [alertMenu addAction:[UIAlertAction actionWithTitle:LOC(@"CANCEL_TEXT") style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
     }]];
 
     [self presentViewController:alertMenu animated:YES completion:nil];
@@ -138,6 +174,7 @@
             [filePathsAudioArtworkArray addObject:jpg];
         }
     }
+    self.allItems = [NSArray arrayWithArray:filePathsAudioArray];
 }
 
 - (void)coloursView {

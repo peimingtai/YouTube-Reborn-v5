@@ -1,4 +1,5 @@
 #import "DownloadsVideoController.h"
+#import "Localization.h"
 #import <Photos/Photos.h>
 
 @interface DownloadsVideoController ()
@@ -16,6 +17,9 @@
 - (void)viewDidLoad {
     [super viewDidLoad];
     [self coloursView];
+
+    self.searchBar = [[UISearchBar alloc] initWithFrame:CGRectMake(0, 0, CGRectGetWidth(self.view.frame), 44)];
+    self.searchBar.delegate = self;
 
     UIBarButtonItem *searchButton = [[UIBarButtonItem alloc] initWithCustomView:self.searchBar];
     self.navigationItem.rightBarButtonItem = searchButton;
@@ -44,12 +48,20 @@
     ]];
 }
 
+- (void)searchBarCancelButtonClicked:(UISearchBar *)searchBar {
+    searchBar.text = @"";
+    self.filteredItems = [NSArray array];
+    self.isSearching = NO;
+    [self.tableView reloadData];
+    [searchBar resignFirstResponder];
+}
+
 - (void)searchBarSearchButtonClicked:(UISearchBar *)searchBar {
     [searchBar resignFirstResponder];
     NSString *searchText = searchBar.text;
 
     if (searchText.length > 0) {
-        NSPredicate *predicate = [NSPredicate predicateWithFormat:@"SELF CONTAINS[cd] %@", searchText];
+        NSPredicate *predicate = [NSPredicate predicateWithFormat:@"SELF BEGINSWITH[cd] %@", searchText];
         self.filteredItems = [self.allItems filteredArrayUsingPredicate:predicate];
         self.isSearching = YES;
     } else {
@@ -64,9 +76,7 @@
 }
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section {
-    return [filePathsVideoArray count];
-
-        if (self.isSearching) {
+    if (self.isSearching) {
         return self.filteredItems.count;
     } else {
         return self.allItems.count;
@@ -78,7 +88,7 @@
     UITableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:CellIdentifier];
 
     if (cell == nil) {
-        cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleSubtitle reuseIdentifier:nil];
+        cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleSubtitle reuseIdentifier:CellIdentifier];
         cell.textLabel.adjustsFontSizeToFitWidth = YES;
         cell.textLabel.lineBreakMode = NSLineBreakByTruncatingTail;
         cell.detailTextLabel.adjustsFontSizeToFitWidth = YES;
@@ -92,7 +102,7 @@
         else {
             cell.backgroundColor = [UIColor colorWithRed:0.110 green:0.110 blue:0.118 alpha:1.0];
             cell.textLabel.textColor = [UIColor whiteColor];
-	    cell.textLabel.shadowColor = [UIColor blackColor];
+            cell.textLabel.shadowColor = [UIColor blackColor];
             cell.textLabel.shadowOffset = CGSizeMake(1.0, 1.0);
             cell.detailTextLabel.textColor = [UIColor whiteColor];
         }
@@ -104,12 +114,7 @@
     }
     @catch (NSException *exception) {
     }
-    NSString *item;
-    if (self.isSearching) {
-        item = self.filteredItems[indexPath.row];
-    } else {
-        item = self.allItems[indexPath.row];
-    }
+
     return cell;
 }
 
@@ -134,25 +139,25 @@
     NSString *currentVideoFileName = filePathsVideoArray[indexPath.row];
     NSString *currentArtworkFileName = filePathsVideoArtworkArray[indexPath.row];
 
-    UIAlertController *alertMenu = [UIAlertController alertControllerWithTitle:@"Options" message:nil preferredStyle:UIAlertControllerStyleAlert];
+    UIAlertController *alertMenu = [UIAlertController alertControllerWithTitle:LOC(@"OPTIONS_TEXT") message:nil preferredStyle:UIAlertControllerStyleAlert];
 
-    [alertMenu addAction:[UIAlertAction actionWithTitle:@"Import Video To Camera Roll" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
+    [alertMenu addAction:[UIAlertAction actionWithTitle:LOC(@"IMPORT_VIDEO") style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
         [[PHPhotoLibrary sharedPhotoLibrary] performChanges:^{
             NSURL *fileURL = [NSURL fileURLWithPath:[documentsDirectory stringByAppendingPathComponent:currentVideoFileName]];
             [PHAssetChangeRequest creationRequestForAssetFromVideoAtFileURL:fileURL];
         } completionHandler:^(BOOL success, NSError *error) {
             dispatch_async(dispatch_get_main_queue(), ^{
                 if (success) {
-                    UIAlertController *alert = [UIAlertController alertControllerWithTitle:@"Notice" message:@"Video Saved To Camera Roll" preferredStyle:UIAlertControllerStyleAlert];
+                    UIAlertController *alert = [UIAlertController alertControllerWithTitle:LOC(@"NOTICE_TEXT") message:LOC(@"SAVED_VIDEO") preferredStyle:UIAlertControllerStyleAlert];
                                         
-                    [alert addAction:[UIAlertAction actionWithTitle:@"Okay" style:UIAlertActionStyleCancel handler:^(UIAlertAction * _Nonnull action) {
+                    [alert addAction:[UIAlertAction actionWithTitle:LOC(@"OKAY_TEXT") style:UIAlertActionStyleCancel handler:^(UIAlertAction * _Nonnull action) {
                     }]];
 
                     [self presentViewController:alert animated:YES completion:nil];
                 } else{
-                    UIAlertController *alert = [UIAlertController alertControllerWithTitle:@"Notice" message:@"Save To Camera Roll Failed \nMake Sure To Give Camera Roll Permission To YouTube In The iOS Settings App" preferredStyle:UIAlertControllerStyleAlert];
+                    UIAlertController *alert = [UIAlertController alertControllerWithTitle:LOC(@"NOTICE_TEXT") message:LOC(@"SAVED_VIDEO_2") preferredStyle:UIAlertControllerStyleAlert];
                                         
-                    [alert addAction:[UIAlertAction actionWithTitle:@"Okay" style:UIAlertActionStyleCancel handler:^(UIAlertAction * _Nonnull action) {
+                    [alert addAction:[UIAlertAction actionWithTitle:LOC(@"OKAY_TEXT") style:UIAlertActionStyleCancel handler:^(UIAlertAction * _Nonnull action) {
                     }]];
 
                     [self presentViewController:alert animated:YES completion:nil];
@@ -161,13 +166,13 @@
         }];
     }]];
 
-    [alertMenu addAction:[UIAlertAction actionWithTitle:@"Delete Video" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
+    [alertMenu addAction:[UIAlertAction actionWithTitle:LOC(@"DELETE_VIDEO") style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
         [[NSFileManager defaultManager] removeItemAtPath:[documentsDirectory stringByAppendingPathComponent:currentVideoFileName] error:nil];
         [[NSFileManager defaultManager] removeItemAtPath:[documentsDirectory stringByAppendingPathComponent:currentArtworkFileName] error:nil];
 
-        UIAlertController *alertDeleted = [UIAlertController alertControllerWithTitle:@"Notice" message:@"Video Successfully Deleted" preferredStyle:UIAlertControllerStyleAlert];
+        UIAlertController *alertDeleted = [UIAlertController alertControllerWithTitle:LOC(@"NOTICE_TEXT") message:LOC(@"VIDEO_DELETED") preferredStyle:UIAlertControllerStyleAlert];
 
-        [alertDeleted addAction:[UIAlertAction actionWithTitle:@"Okay" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
+        [alertDeleted addAction:[UIAlertAction actionWithTitle:LOC(@"OKAY_TEXT") style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
             [filePathsVideoArray removeAllObjects];
             [filePathsVideoArtworkArray removeAllObjects];
             [self setupVideoArrays];
@@ -177,7 +182,7 @@
         [self presentViewController:alertDeleted animated:YES completion:nil];
     }]];
 
-    [alertMenu addAction:[UIAlertAction actionWithTitle:@"Cancel" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
+    [alertMenu addAction:[UIAlertAction actionWithTitle:LOC(@"CANCEL_TEXT") style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
     }]];
 
     [self presentViewController:alertMenu animated:YES completion:nil];
@@ -198,6 +203,7 @@
             [filePathsVideoArtworkArray addObject:jpg];
         }
     }
+    self.allItems = [NSArray arrayWithArray:filePathsVideoArray];
 }
 
 - (void)coloursView {

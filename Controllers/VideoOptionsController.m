@@ -43,7 +43,7 @@
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section {
     if ([[NSUserDefaults standardUserDefaults] boolForKey:@"kEnableCustomDoubleTapToSkipDuration"] == YES) {
-        return 14;
+        return 16;
     }
     return 17;
 }
@@ -113,32 +113,32 @@
             cell.accessoryView = autoFullScreen;
         }
         if (indexPath.row == 5) {
+            cell.textLabel.text = LOC(@"DISABLE_PINCH_TO_ZOOM");
+            UISwitch *disablePinchToZoom = [[UISwitch alloc] initWithFrame:CGRectZero];
+            [disablePinchToZoom addTarget:self action:@selector(toggleDisablePinchToZoom:) forControlEvents:UIControlEventValueChanged];
+            disablePinchToZoom.on = [[NSUserDefaults standardUserDefaults] boolForKey:@"kDisablePinchToZoom"];
+            cell.accessoryView = disablePinchToZoom;
+        }
+        if (indexPath.row == 6) {
             cell.textLabel.text = LOC(@"DISABLE_VIDEO_ENDSCREEN_POPUPS");
             UISwitch *disableVideoEndscreenPopups = [[UISwitch alloc] initWithFrame:CGRectZero];
             [disableVideoEndscreenPopups addTarget:self action:@selector(toggleDisableVideoEndscreenPopups:) forControlEvents:UIControlEventValueChanged];
             disableVideoEndscreenPopups.on = [[NSUserDefaults standardUserDefaults] boolForKey:@"kDisableVideoEndscreenPopups"];
             cell.accessoryView = disableVideoEndscreenPopups;
         }
-        if (indexPath.row == 6) {
+        if (indexPath.row == 7) {
             cell.textLabel.text = LOC(@"DISABLE_VIDEO_INFO_CARDS");
             UISwitch *disableVideoInfoCards = [[UISwitch alloc] initWithFrame:CGRectZero];
             [disableVideoInfoCards addTarget:self action:@selector(toggleDisableVideoInfoCards:) forControlEvents:UIControlEventValueChanged];
             disableVideoInfoCards.on = [[NSUserDefaults standardUserDefaults] boolForKey:@"kDisableVideoInfoCards"];
             cell.accessoryView = disableVideoInfoCards;
         }
-        if (indexPath.row == 7) {
+        if (indexPath.row == 8) {
             cell.textLabel.text = LOC(@"DISABLE_VIDEO_AUTOPLAY");
             UISwitch *disableVideoAutoPlay = [[UISwitch alloc] initWithFrame:CGRectZero];
             [disableVideoAutoPlay addTarget:self action:@selector(toggleDisableVideoAutoPlay:) forControlEvents:UIControlEventValueChanged];
             disableVideoAutoPlay.on = [[NSUserDefaults standardUserDefaults] boolForKey:@"kDisableVideoAutoPlay"];
             cell.accessoryView = disableVideoAutoPlay;
-        }
-        if (indexPath.row == 8) {
-            cell.textLabel.text = LOC(@"HIDE_CHANNEL_WATERMARK");
-            UISwitch *hideChannelWatermark = [[UISwitch alloc] initWithFrame:CGRectZero];
-            [hideChannelWatermark addTarget:self action:@selector(toggleHideChannelWatermark:) forControlEvents:UIControlEventValueChanged];
-            hideChannelWatermark.on = [[NSUserDefaults standardUserDefaults] boolForKey:@"kHideChannelWatermark"];
-            cell.accessoryView = hideChannelWatermark;
         }
 	if (indexPath.row == 9) {
             cell.textLabel.text = LOC(@"RED_PROGRESS_BAR");
@@ -200,10 +200,10 @@
             customDoubleTapToSkipDurationStepper.maximumValue = 1000;
             if ([[NSUserDefaults standardUserDefaults] doubleForKey:@"kCustomDoubleTapToSkipDuration"]) {
                 customDoubleTapToSkipDurationStepper.value = [[NSUserDefaults standardUserDefaults] doubleForKey:@"kCustomDoubleTapToSkipDuration"];
-                cell.textLabel.text = [NSString stringWithFormat:@"Value (Seconds): %.lf", [[NSUserDefaults standardUserDefaults] doubleForKey:@"kCustomDoubleTapToSkipDuration"]];
+                cell.textLabel.text = [NSString stringWithFormat:LOC(@"VALUE_TEXT"), [[NSUserDefaults standardUserDefaults] doubleForKey:@"kCustomDoubleTapToSkipDuration"]];
             } else {
                 customDoubleTapToSkipDurationStepper.value = 10;
-                cell.textLabel.text = @"Value (Seconds): 10";
+                cell.textLabel.text = LOC(@"VALUE_10_TEXT");
             }
             [customDoubleTapToSkipDurationStepper addTarget:self action:@selector(customDoubleTapToSkipDurationStepperValueChanged:) forControlEvents:UIControlEventValueChanged];
             cell.accessoryView = customDoubleTapToSkipDurationStepper;
@@ -214,17 +214,17 @@
 
 - (void)tableView:(UITableView *)tableView accessoryButtonTappedForRowWithIndexPath:(NSIndexPath *)indexPath {
     if (indexPath.row == 0 || indexPath.row == 1) {
-        UIAlertController *alertError = [UIAlertController alertControllerWithTitle:@"Notice" message:@"This feature has been disabled cause you have the 'I Have YouTube Premium' option enabled" preferredStyle:UIAlertControllerStyleAlert];
+        UIAlertController *alertError = [UIAlertController alertControllerWithTitle:LOC(@"NOTICE_TEXT") message:LOC(@"DISABLE_PREMIUM_TEXT") preferredStyle:UIAlertControllerStyleAlert];
 
-        [alertError addAction:[UIAlertAction actionWithTitle:@"Okay" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
+        [alertError addAction:[UIAlertAction actionWithTitle:LOC(@"OKAY_TEXT") style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
         }]];
 
         [self presentViewController:alertError animated:YES completion:nil];
     }
     if (indexPath.row == 10) {
-        UIAlertController *alertError = [UIAlertController alertControllerWithTitle:@"Notice" message:@"You must enable 'Disable Related Videos In Overlay' and 'Hide Overlay Quick Actions' in YouTube Reborn settings to use 'Always Show Player Bar'" preferredStyle:UIAlertControllerStyleAlert];
+        UIAlertController *alertError = [UIAlertController alertControllerWithTitle:LOC(@"NOTICE_TEXT") message:LOC(@"ALWAYS_SHOW_BAR_TEXT") preferredStyle:UIAlertControllerStyleAlert];
 
-        [alertError addAction:[UIAlertAction actionWithTitle:@"Okay" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
+        [alertError addAction:[UIAlertAction actionWithTitle:LOC(@"OKAY_TEXT") style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
         }]];
 
         [self presentViewController:alertError animated:YES completion:nil];
@@ -318,6 +318,16 @@
         [[NSUserDefaults standardUserDefaults] synchronize];
     } else {
         [[NSUserDefaults standardUserDefaults] setBool:NO forKey:@"kAutoFullScreen"];
+        [[NSUserDefaults standardUserDefaults] synchronize];
+    }
+}
+
+- (void)toggleDisablePinchToZoom:(UISwitch *)sender {
+    if ([sender isOn]) {
+        [[NSUserDefaults standardUserDefaults] setBool:YES forKey:@"kDisablePinchToZoom"];
+        [[NSUserDefaults standardUserDefaults] synchronize];
+    } else {
+        [[NSUserDefaults standardUserDefaults] setBool:NO forKey:@"kDisablePinchToZoom"];
         [[NSUserDefaults standardUserDefaults] synchronize];
     }
 }

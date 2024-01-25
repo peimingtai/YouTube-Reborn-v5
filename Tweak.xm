@@ -1,4 +1,13 @@
 #import "Tweak.h"
+#import <rootless.h>
+#import <Foundation/Foundation.h>
+
+extern NSBundle *YouTubeRebornBundle();
+
+static inline NSString *LOC(NSString *key) {
+    NSBundle *tweakBundle = YouTubeRebornBundle();
+    return [tweakBundle localizedStringForKey:key value:nil table:nil];
+}
 
 #define SYSTEM_VERSION_EQUAL_TO(v)                  ([[[UIDevice currentDevice] systemVersion] compare:v options:NSNumericSearch] == NSOrderedSame)
 #define SYSTEM_VERSION_GREATER_THAN(v)              ([[[UIDevice currentDevice] systemVersion] compare:v options:NSNumericSearch] == NSOrderedDescending)
@@ -17,15 +26,11 @@ static BOOL hasDeviceNotch() {
 		return [context biometryType] == LABiometryTypeFaceID;
 	}
 }
-
-@interface ASCollectionView (Reborn)
-@property (retain, nonatomic) UIButton *rebornOverlayButton;
-@property (retain, nonatomic) YTTouchFeedbackController *rebornTouchController;
-- (void)didPressReborn:(UIButton *)button event:(UIEvent *)event;
-@end
+static NSString *TabBarOPIconPath;
 
 UIColor *rebornHexColour;
 UIColor *lcmHexColor;
+UIColor *progressbarHexColor;
 
 YTLocalPlaybackController *playingVideoID;
 
@@ -361,26 +366,26 @@ static NSString *accessGroupID() {
     UIAlertController *alertMenu = [UIAlertController alertControllerWithTitle:nil message:nil preferredStyle:UIAlertControllerStyleActionSheet];
 
     if ([[NSUserDefaults standardUserDefaults] boolForKey:@"kRebornIHaveYouTubePremium"] == NO) {
-        [alertMenu addAction:[UIAlertAction actionWithTitle:@"Download Audio" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
+        [alertMenu addAction:[UIAlertAction actionWithTitle:LOC(@"DOWNLOAD_AUDIO") style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
             [self rebornAudioDownloader:videoIdentifier];
         }]];
 
-        [alertMenu addAction:[UIAlertAction actionWithTitle:@"Download Video" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
+        [alertMenu addAction:[UIAlertAction actionWithTitle:LOC(@"DOWNLOAD_VIDEO") style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
             [self rebornVideoDownloader:videoIdentifier];
         }]];
     }
 
     if (SYSTEM_VERSION_GREATER_THAN_OR_EQUAL_TO(@"14.0") && SYSTEM_VERSION_LESS_THAN(@"15.0")) {
-        [alertMenu addAction:[UIAlertAction actionWithTitle:@"Picture In Picture" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
+        [alertMenu addAction:[UIAlertAction actionWithTitle:LOC(@"PIP_TEXT") style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
             [self rebornPictureInPicture:videoIdentifier];
         }]];
     }
 
-    [alertMenu addAction:[UIAlertAction actionWithTitle:@"Play In External App" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
+    [alertMenu addAction:[UIAlertAction actionWithTitle:LOC(@"PLAY_APP_TEXT") style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
         [self rebornPlayInExternalApp:videoIdentifier];
     }]];
 
-    [alertMenu addAction:[UIAlertAction actionWithTitle:@"Cancel" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
+    [alertMenu addAction:[UIAlertAction actionWithTitle:LOC(@"CANCEL_TEXT") style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
     }]];
 
     [alertMenu setModalPresentationStyle:UIModalPresentationPopover];
@@ -530,9 +535,9 @@ static NSString *accessGroupID() {
         UIViewController *pictureInPictureViewController = self._viewControllerForAncestor;
         [pictureInPictureViewController presentViewController:pictureInPictureControllerView animated:YES completion:nil];
     } else {
-        UIAlertController *alertPip = [UIAlertController alertControllerWithTitle:@"Notice" message:@"You must enable 'Background Playback' in YouTube Reborn settings to use Picture-In-Picture" preferredStyle:UIAlertControllerStyleAlert];
+        UIAlertController *alertPip = [UIAlertController alertControllerWithTitle:LOC(@"NOTICE_TEXT") message:LOC(@"PIP_NOTICE_TEXT") preferredStyle:UIAlertControllerStyleAlert];
 
-        [alertPip addAction:[UIAlertAction actionWithTitle:@"Okay" style:UIAlertActionStyleCancel handler:^(UIAlertAction * _Nonnull action) {
+        [alertPip addAction:[UIAlertAction actionWithTitle:LOC(@"OKAY_TEXT") style:UIAlertActionStyleCancel handler:^(UIAlertAction * _Nonnull action) {
         }]];
 
         UIViewController *pipViewController = [self _viewControllerForAncestor];
@@ -545,9 +550,9 @@ static NSString *accessGroupID() {
     NSDictionary *youtubePlayerRequest = [YouTubeExtractor youtubePlayerRequest:@"ios":videoID];
     NSURL *videoPath = [NSURL URLWithString:[NSString stringWithFormat:@"%@", youtubePlayerRequest[@"streamingData"][@"hlsManifestUrl"]]];
 
-    UIAlertController *alertApp = [UIAlertController alertControllerWithTitle:@"Choose App" message:nil preferredStyle:UIAlertControllerStyleAlert];
+    UIAlertController *alertApp = [UIAlertController alertControllerWithTitle:LOC(@"CHOOSE_TEXT") message:nil preferredStyle:UIAlertControllerStyleAlert];
 
-    [alertApp addAction:[UIAlertAction actionWithTitle:@"Play In Infuse" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
+    [alertApp addAction:[UIAlertAction actionWithTitle:LOC(@"INFUSE_TEXT") style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
         [[UIApplication sharedApplication] openURL:[NSURL URLWithString:[NSString stringWithFormat:@"infuse://x-callback-url/play?url=%@", videoPath]] options:@{} completionHandler:nil];
     }]];
 
@@ -555,7 +560,7 @@ static NSString *accessGroupID() {
         [[UIApplication sharedApplication] openURL:[NSURL URLWithString:[NSString stringWithFormat:@"vlc-x-callback://x-callback-url/stream?url=%@", videoPath]] options:@{} completionHandler:nil];
     }]];
 
-    [alertApp addAction:[UIAlertAction actionWithTitle:@"Cancel" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
+    [alertApp addAction:[UIAlertAction actionWithTitle:LOC(@"CANCEL_TEXT") style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
     }]];
 
     UIViewController *alertAppViewController = [self _viewControllerForAncestor];
@@ -580,29 +585,29 @@ static NSString *accessGroupID() {
 - (void)rebornOptionsAction {
     NSString *videoIdentifier = [shortsPlayingVideoID videoId];
 
-    UIAlertController *alertMenu = [UIAlertController alertControllerWithTitle:nil message:@"Please Pause The Video Before Continuing" preferredStyle:UIAlertControllerStyleActionSheet];
+    UIAlertController *alertMenu = [UIAlertController alertControllerWithTitle:nil message:LOC(@"DOWNLOAD_NOTICE_TEXT") preferredStyle:UIAlertControllerStyleActionSheet];
 
     if ([[NSUserDefaults standardUserDefaults] boolForKey:@"kRebornIHaveYouTubePremium"] == NO) {
-        [alertMenu addAction:[UIAlertAction actionWithTitle:@"Download Audio" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
+        [alertMenu addAction:[UIAlertAction actionWithTitle:LOC(@"DOWNLOAD_AUDIO") style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
             [self rebornAudioDownloader:videoIdentifier];
         }]];
 
-        [alertMenu addAction:[UIAlertAction actionWithTitle:@"Download Video" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
+        [alertMenu addAction:[UIAlertAction actionWithTitle:LOC(@"DOWNLOAD_VIDEO") style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
             [self rebornVideoDownloader:videoIdentifier];
         }]];
     }
 
     if (SYSTEM_VERSION_GREATER_THAN_OR_EQUAL_TO(@"14.0") && SYSTEM_VERSION_LESS_THAN(@"15.0")) {
-        [alertMenu addAction:[UIAlertAction actionWithTitle:@"Picture In Picture" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
+        [alertMenu addAction:[UIAlertAction actionWithTitle:LOC(@"PIP_TEXT") style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
             [self rebornPictureInPicture:videoIdentifier];
         }]];
     }
 
-    [alertMenu addAction:[UIAlertAction actionWithTitle:@"Play In External App" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
+    [alertMenu addAction:[UIAlertAction actionWithTitle:LOC(@"PLAY_APP_TEXT") style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
         [self rebornPlayInExternalApp:videoIdentifier];
     }]];
 
-    [alertMenu addAction:[UIAlertAction actionWithTitle:@"Cancel" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
+    [alertMenu addAction:[UIAlertAction actionWithTitle:LOC(@"CANCEL_TEXT") style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
     }]];
 
     [alertMenu setModalPresentationStyle:UIModalPresentationPopover];
@@ -751,9 +756,9 @@ static NSString *accessGroupID() {
         UIViewController *pictureInPictureViewController = self._viewControllerForAncestor;
         [pictureInPictureViewController presentViewController:pictureInPictureControllerView animated:YES completion:nil];
     } else {
-        UIAlertController *alertPip = [UIAlertController alertControllerWithTitle:@"Notice" message:@"You must enable 'Background Playback' in YouTube Reborn settings to use Picture-In-Picture" preferredStyle:UIAlertControllerStyleAlert];
+        UIAlertController *alertPip = [UIAlertController alertControllerWithTitle:LOC(@"NOTICE_TEXT") message:LOC(@"PIP_NOTICE_TEXT") preferredStyle:UIAlertControllerStyleAlert];
 
-        [alertPip addAction:[UIAlertAction actionWithTitle:@"Okay" style:UIAlertActionStyleCancel handler:^(UIAlertAction * _Nonnull action) {
+        [alertPip addAction:[UIAlertAction actionWithTitle:LOC(@"OKAY_TEXT") style:UIAlertActionStyleCancel handler:^(UIAlertAction * _Nonnull action) {
         }]];
 
         UIViewController *pipViewController = [self _viewControllerForAncestor];
@@ -766,9 +771,9 @@ static NSString *accessGroupID() {
     NSDictionary *youtubePlayerRequest = [YouTubeExtractor youtubePlayerRequest:@"ios":videoID];
     NSURL *videoPath = [NSURL URLWithString:[NSString stringWithFormat:@"%@", youtubePlayerRequest[@"streamingData"][@"hlsManifestUrl"]]];
 
-    UIAlertController *alertApp = [UIAlertController alertControllerWithTitle:@"Choose App" message:nil preferredStyle:UIAlertControllerStyleAlert];
+    UIAlertController *alertApp = [UIAlertController alertControllerWithTitle:LOC(@"CHOOSE_TEXT") message:nil preferredStyle:UIAlertControllerStyleAlert];
 
-    [alertApp addAction:[UIAlertAction actionWithTitle:@"Play In Infuse" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
+    [alertApp addAction:[UIAlertAction actionWithTitle:LOC(@"INFUSE_TEXT") style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
         [[UIApplication sharedApplication] openURL:[NSURL URLWithString:[NSString stringWithFormat:@"infuse://x-callback-url/play?url=%@", videoPath]] options:@{} completionHandler:nil];
     }]];
 
@@ -776,7 +781,7 @@ static NSString *accessGroupID() {
         [[UIApplication sharedApplication] openURL:[NSURL URLWithString:[NSString stringWithFormat:@"vlc-x-callback://x-callback-url/stream?url=%@", videoPath]] options:@{} completionHandler:nil];
     }]];
 
-    [alertApp addAction:[UIAlertAction actionWithTitle:@"Cancel" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
+    [alertApp addAction:[UIAlertAction actionWithTitle:LOC(@"CANCEL_TEXT") style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
     }]];
 
     UIViewController *alertAppViewController = [self _viewControllerForAncestor];
@@ -784,14 +789,14 @@ static NSString *accessGroupID() {
 }
 %end
 
-/* WIP - YouTube Reborn v5 Button
+// YouTube Reborn Video Player Button (v5.0.0+)
 #pragma mark - @NguyenASang - Video tab bar Reborn Download Video or Audio Button (17.01.4 and up)
 
 static UIButton *makeUnderRebornPlayerButton(ELMCellNode *node, NSString *title, NSString *accessibilityLabel) {
     NSInteger pageStyle = [%c(YTPageStyleController) pageStyle];
     YTColorPalette *palette = [%c(YTColorPalette) colorPaletteForPageStyle:pageStyle];
-    YTCommonColorPalette *palette = pageStyle == 1 ? [%c(YTCommonColorPalette) darkPalette] : [%c(YTCommonColorPalette) lightPalette];
-    if (!palette) palette = [%c(YTColorPalette) colorPaletteForPageStyle:pageStyle]; // YouTube 17.18.4 and below
+    YTCommonColorPalette *commonPalette = pageStyle == 1 ? [%c(YTCommonColorPalette) darkPalette] : [%c(YTCommonColorPalette) lightPalette];
+    if (!commonPalette) commonPalette = [%c(YTColorPalette) colorPaletteForPageStyle:pageStyle]; // YouTube 17.18.4 and below
     UIColor *textColor = [palette textPrimary];
     ELMContainerNode *containerNode = (ELMContainerNode *)[[[[node yogaChildren] firstObject] yogaChildren] firstObject]; // To get node container properties
     UIButton *buttonView = [[UIButton alloc] initWithFrame:CGRectMake(0, 0, 65, containerNode.calculatedSize.height)];
@@ -801,7 +806,7 @@ static UIButton *makeUnderRebornPlayerButton(ELMCellNode *node, NSString *title,
     buttonView.layer.cornerRadius = 16;
 
     UIImageView *buttonImage = [[UIImageView alloc] initWithFrame:CGRectMake(12, ([buttonView frame].size.height - 15.5) / 2, 15.5, 15.5)];
-    buttonImage.image = [%c(QTMIcon) tintImage:[UIImage imageWithContentsOfFile:youtubeRebornLightSettingsPath] color:textColor];
+    buttonImage.image = [%c(QTMIcon) tintImage:[UIImage imageWithContentsOfFile:TabBarOPIconPath] color:textColor];
 
     UILabel *buttonTitle = [[UILabel alloc] initWithFrame:CGRectMake(33, 9, 20, 14)];
     buttonTitle.font = [UIFont boldSystemFontOfSize:12];
@@ -817,16 +822,17 @@ static UIButton *makeUnderRebornPlayerButton(ELMCellNode *node, NSString *title,
 
 %property (retain, nonatomic) UIButton *rebornOverlayButton;
 %property (retain, nonatomic) YTTouchFeedbackController *rebornTouchController;
+%property (retain, nonatomic) UIButton *pipButton; // YouPiP
 
 - (BOOL)touchesShouldCancelInContentView:(id)arg1 {
     return YES; // Ensure we can scroll
 }
 
 - (ELMCellNode *)nodeForItemAtIndexPath:(NSIndexPath *)indexPath {
-    if (UseTabBarRebornButton() && [self.accessibilityIdentifier isEqual:@"id.video.scrollable_action_bar"] && !self.rebornOverlayButton) {
+    if ([self.accessibilityIdentifier isEqual:@"id.video.scrollable_action_bar"] && !self.rebornOverlayButton) {
         self.contentInset = UIEdgeInsetsMake(0, 0, 0, 73);
         if ([self numberOfItemsInSection:0] - 1 == indexPath.row) {
-            self.rebornOverlayButton = makeUnderRebornPlayerButton(%orig, @"Reborn", @"Download Audio or Video Files");
+            self.rebornOverlayButton = makeUnderRebornPlayerButton(%orig, @"OP", LOC(@"DOWNLOAD_FILES_TEXT"));
             [self addSubview:self.rebornOverlayButton];
 
             [self.rebornOverlayButton addTarget:self action:@selector(didPressReborn:event:) forControlEvents:UIControlEventTouchUpInside];
@@ -839,12 +845,30 @@ static UIButton *makeUnderRebornPlayerButton(ELMCellNode *node, NSString *title,
 }
 
 - (void)nodesDidRelayout:(NSArray <ELMCellNode *> *)nodes {
-    if (UseTabBarRebornButton() && [self.accessibilityIdentifier isEqual:@"id.video.scrollable_action_bar"] && [nodes count] == 1) {
+    if (self.pipButton && self.rebornOverlayButton) { // Check if YouPiP and rebornOverlayButton both exist
         CGFloat offset = nodes[0].calculatedSize.width - [nodes[0].layoutAttributes frame].size.width;
+        CGFloat rebornButtonOffset = self.pipButton.frame.size.width;
+
+        [UIView animateWithDuration:0.3 animations:^{
+            self.pipButton.center = CGPointMake(self.pipButton.center.x + offset, self.pipButton.center.y);
+            self.rebornOverlayButton.center = CGPointMake(self.rebornOverlayButton.center.x + offset + rebornButtonOffset, self.rebornOverlayButton.center.y);
+        }];
+
+    } else if (self.pipButton && !self.rebornOverlayButton) { // Check if only YouPiP Button exists
+        CGFloat offset = nodes[0].calculatedSize.width - [nodes[0].layoutAttributes frame].size.width;
+
+        [UIView animateWithDuration:0.3 animations:^{
+            self.pipButton.center = CGPointMake(self.pipButton.center.x + offset, self.pipButton.center.y);
+        }];
+
+    } else if (!self.pipButton && self.rebornOverlayButton) { // Check if only rebornOverlayButton exists
+        CGFloat offset = nodes[0].calculatedSize.width - [nodes[0].layoutAttributes frame].size.width;
+
         [UIView animateWithDuration:0.3 animations:^{
             self.rebornOverlayButton.center = CGPointMake(self.rebornOverlayButton.center.x + offset, self.rebornOverlayButton.center.y);
         }];
     }
+    
     %orig;
 }
 
@@ -852,17 +876,225 @@ static UIButton *makeUnderRebornPlayerButton(ELMCellNode *node, NSString *title,
 - (void)didPressReborn:(UIButton *)button event:(UIEvent *)event {
     CGPoint location = [[[event allTouches] anyObject] locationInView:button];
     if (CGRectContainsPoint(button.bounds, location)) {
-        UIViewController *controller = [self.collectionNode closestViewController];
-        YTPlaybackStrippedWatchController *provider = [controller valueForKey:@"_metadataPanelStateProvider"];
-        YTWatchViewController *watchViewController = [provider valueForKey:@"_watchViewController"];
-        YTPlayerViewController *playerViewController = [watchViewController valueForKey:@"_playerViewController"];
-        FromUser = YES;
-        bootstrapReborn(playerViewController, YES);
+        [self rebornOptionsAction];
     }
 }
 
+%new;
+- (void)rebornOptionsAction {
+    NSInteger videoStatus = [stateOut playerState];
+    if (videoStatus == 3) {
+        YTMainAppControlsOverlayView *overlayView = [self _viewControllerForAncestor];
+        UIButton *playPauseButton = [overlayView playPauseButton];
+        [overlayView didPressPause:playPauseButton];
+    }
+
+    NSString *videoIdentifier = [playingVideoID currentVideoID];
+
+    UIAlertController *alertMenu = [UIAlertController alertControllerWithTitle:nil message:nil preferredStyle:UIAlertControllerStyleActionSheet];
+
+    if ([[NSUserDefaults standardUserDefaults] boolForKey:@"kRebornIHaveYouTubePremium"] == NO) {
+        [alertMenu addAction:[UIAlertAction actionWithTitle:LOC(@"DOWNLOAD_AUDIO") style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
+            [self rebornAudioDownloader:videoIdentifier];
+        }]];
+
+        [alertMenu addAction:[UIAlertAction actionWithTitle:LOC(@"DOWNLOAD_VIDEO") style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
+            [self rebornVideoDownloader:videoIdentifier];
+        }]];
+    }
+
+    if (SYSTEM_VERSION_GREATER_THAN_OR_EQUAL_TO(@"14.0") && SYSTEM_VERSION_LESS_THAN(@"15.0")) {
+        [alertMenu addAction:[UIAlertAction actionWithTitle:LOC(@"PIP_TEXT") style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
+            [self rebornPictureInPicture:videoIdentifier];
+        }]];
+    }
+
+    [alertMenu addAction:[UIAlertAction actionWithTitle:LOC(@"PLAY_APP_TEXT") style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
+        [self rebornPlayInExternalApp:videoIdentifier];
+    }]];
+
+    [alertMenu addAction:[UIAlertAction actionWithTitle:LOC(@"CANCEL_TEXT") style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
+    }]];
+
+    [alertMenu setModalPresentationStyle:UIModalPresentationPopover];
+    UIPopoverPresentationController *popPresenter = [alertMenu popoverPresentationController];
+    popPresenter.sourceView = self;
+    popPresenter.sourceRect = self.bounds;
+
+    UIViewController *menuViewController = [self _viewControllerForAncestor];
+    [menuViewController presentViewController:alertMenu animated:YES completion:nil];
+}
+
+%new;
+- (void)rebornVideoDownloader :(NSString *)videoID {
+    NSDictionary *youtubePlayerRequest = [YouTubeExtractor youtubePlayerRequest:@"android":videoID];
+    NSString *videoTitle = [NSString stringWithFormat:@"%@", youtubePlayerRequest[@"videoDetails"][@"title"]];
+    NSArray *videoArtworkArray = youtubePlayerRequest[@"videoDetails"][@"thumbnail"][@"thumbnails"];
+    NSURL *videoArtwork = [NSURL URLWithString:[NSString stringWithFormat:@"%@", videoArtworkArray[([videoArtworkArray count] - 1)][@"url"]]];
+    NSDictionary *innertubeFormats = youtubePlayerRequest[@"streamingData"][@"formats"];
+    NSURL *video2160p;
+    NSURL *video1440p;
+    NSURL *video1080p;
+    NSURL *video720p;
+    NSURL *video480p;
+    NSURL *video360p;
+    NSURL *video240p;
+    for (NSDictionary *format in innertubeFormats) {
+        if ([[format objectForKey:@"mimeType"] containsString:@"video/mp4"] & [[NSString stringWithFormat:@"%@", [format objectForKey:@"height"]] isEqual:@"2160"] || [[format objectForKey:@"mimeType"] containsString:@"video/mp4"] & [[NSString stringWithFormat:@"%@", [format objectForKey:@"quality"]] isEqual:@"hd2160"]) {
+            if (video2160p == nil) {
+                video2160p = [NSURL URLWithString:[NSString stringWithFormat:@"%@", [format objectForKey:@"url"]]];
+            }
+        } else if ([[format objectForKey:@"mimeType"] containsString:@"video/mp4"] & [[NSString stringWithFormat:@"%@", [format objectForKey:@"height"]] isEqual:@"1440"] || [[format objectForKey:@"mimeType"] containsString:@"video/mp4"] & [[NSString stringWithFormat:@"%@", [format objectForKey:@"quality"]] isEqual:@"hd1440"]) {
+            if (video1440p == nil) {
+                video1440p = [NSURL URLWithString:[NSString stringWithFormat:@"%@", [format objectForKey:@"url"]]];
+            }
+        } else if ([[format objectForKey:@"mimeType"] containsString:@"video/mp4"] & [[NSString stringWithFormat:@"%@", [format objectForKey:@"height"]] isEqual:@"1080"] || [[format objectForKey:@"mimeType"] containsString:@"video/mp4"] & [[NSString stringWithFormat:@"%@", [format objectForKey:@"quality"]] isEqual:@"hd1080"]) {
+            if (video1080p == nil) {
+                video1080p = [NSURL URLWithString:[NSString stringWithFormat:@"%@", [format objectForKey:@"url"]]];
+            }
+        } else if ([[format objectForKey:@"mimeType"] containsString:@"video/mp4"] & [[NSString stringWithFormat:@"%@", [format objectForKey:@"height"]] isEqual:@"720"] || [[format objectForKey:@"mimeType"] containsString:@"video/mp4"] & [[NSString stringWithFormat:@"%@", [format objectForKey:@"quality"]] isEqual:@"hd720"]) {
+            if (video720p == nil) {
+                video720p = [NSURL URLWithString:[NSString stringWithFormat:@"%@", [format objectForKey:@"url"]]];
+            }
+        } else if ([[format objectForKey:@"mimeType"] containsString:@"video/mp4"] & [[NSString stringWithFormat:@"%@", [format objectForKey:@"height"]] isEqual:@"480"] || [[format objectForKey:@"mimeType"] containsString:@"video/mp4"] & [[NSString stringWithFormat:@"%@", [format objectForKey:@"qualityLabel"]] isEqual:@"480p"]) {
+            if (video480p == nil) {
+                video480p = [NSURL URLWithString:[NSString stringWithFormat:@"%@", [format objectForKey:@"url"]]];
+            }
+        } else if ([[format objectForKey:@"mimeType"] containsString:@"video/mp4"] & [[NSString stringWithFormat:@"%@", [format objectForKey:@"height"]] isEqual:@"360"] || [[format objectForKey:@"mimeType"] containsString:@"video/mp4"] & [[NSString stringWithFormat:@"%@", [format objectForKey:@"qualityLabel"]] isEqual:@"360p"]) {
+            if (video360p == nil) {
+                video360p = [NSURL URLWithString:[NSString stringWithFormat:@"%@", [format objectForKey:@"url"]]];
+            }
+        } else if ([[format objectForKey:@"mimeType"] containsString:@"video/mp4"] & [[NSString stringWithFormat:@"%@", [format objectForKey:@"height"]] isEqual:@"240"] || [[format objectForKey:@"mimeType"] containsString:@"video/mp4"] & [[NSString stringWithFormat:@"%@", [format objectForKey:@"qualityLabel"]] isEqual:@"240p"]) {
+            if (video240p == nil) {
+                video240p = [NSURL URLWithString:[NSString stringWithFormat:@"%@", [format objectForKey:@"url"]]];
+            }
+        }
+    }
+
+    NSURL *videoURL;
+    if (video2160p != nil) {
+        videoURL = video2160p;
+    } else if (video1440p != nil) {
+        videoURL = video1440p;
+    } else if (video1080p != nil) {
+        videoURL = video1080p;
+    } else if (video720p != nil) {
+        videoURL = video720p;
+    } else if (video480p != nil) {
+        videoURL = video480p;
+    } else if (video360p != nil) {
+        videoURL = video360p;
+    } else if (video240p != nil) {
+        videoURL = video240p;
+    }
+
+    YouTubeDownloadController *rebornYouTubeDownloadController = [[YouTubeDownloadController alloc] init];
+    rebornYouTubeDownloadController.downloadTitle = videoTitle;
+    rebornYouTubeDownloadController.videoURL = nil;
+    rebornYouTubeDownloadController.audioURL = nil;
+    rebornYouTubeDownloadController.dualURL = videoURL;
+    rebornYouTubeDownloadController.artworkURL = videoArtwork;
+    rebornYouTubeDownloadController.downloadOption = 2;
+
+    UIViewController *rebornYouTubeDownloadViewController = self._viewControllerForAncestor;
+    [rebornYouTubeDownloadViewController presentViewController:rebornYouTubeDownloadController animated:YES completion:nil];
+}
+
+%new;
+- (void)rebornAudioDownloader :(NSString *)videoID {
+    NSDictionary *youtubePlayerRequest = [YouTubeExtractor youtubePlayerRequest:@"android":videoID];
+    NSString *videoTitle = [NSString stringWithFormat:@"%@", youtubePlayerRequest[@"videoDetails"][@"title"]];
+    NSArray *videoArtworkArray = youtubePlayerRequest[@"videoDetails"][@"thumbnail"][@"thumbnails"];
+    NSURL *videoArtwork = [NSURL URLWithString:[NSString stringWithFormat:@"%@", videoArtworkArray[([videoArtworkArray count] - 1)][@"url"]]];
+    NSDictionary *innertubeAdaptiveFormats = youtubePlayerRequest[@"streamingData"][@"adaptiveFormats"];
+    NSURL *audioHigh;
+    NSURL *audioMedium;
+    NSURL *audioLow;
+    for (NSDictionary *format in innertubeAdaptiveFormats) {
+        if ([[format objectForKey:@"mimeType"] containsString:@"audio/mp4"] & [[NSString stringWithFormat:@"%@", [format objectForKey:@"audioQuality"]] isEqual:@"AUDIO_QUALITY_HIGH"]) {
+            if (audioHigh == nil) {
+                audioHigh = [NSURL URLWithString:[NSString stringWithFormat:@"%@", [format objectForKey:@"url"]]];
+            }
+        } else if ([[format objectForKey:@"mimeType"] containsString:@"audio/mp4"] & [[NSString stringWithFormat:@"%@", [format objectForKey:@"audioQuality"]] isEqual:@"AUDIO_QUALITY_MEDIUM"]) {
+            if (audioMedium == nil) {
+                audioMedium = [NSURL URLWithString:[NSString stringWithFormat:@"%@", [format objectForKey:@"url"]]];
+            }
+        } else if ([[format objectForKey:@"mimeType"] containsString:@"audio/mp4"] & [[NSString stringWithFormat:@"%@", [format objectForKey:@"audioQuality"]] isEqual:@"AUDIO_QUALITY_LOW"]) {
+            if (audioLow == nil) {
+                audioLow = [NSURL URLWithString:[NSString stringWithFormat:@"%@", [format objectForKey:@"url"]]];
+            }
+        }
+    }
+
+    NSURL *audioURL;
+    if (audioHigh != nil) {
+        audioURL = audioHigh;
+    } else if (audioMedium != nil) {
+        audioURL = audioMedium;
+    } else if (audioLow != nil) {
+        audioURL = audioLow;
+    }
+
+    YouTubeDownloadController *rebornYouTubeDownloadController = [[YouTubeDownloadController alloc] init];
+    rebornYouTubeDownloadController.downloadTitle = videoTitle;
+    rebornYouTubeDownloadController.videoURL = nil;
+    rebornYouTubeDownloadController.audioURL = audioURL;
+    rebornYouTubeDownloadController.dualURL = nil;
+    rebornYouTubeDownloadController.artworkURL = videoArtwork;
+    rebornYouTubeDownloadController.downloadOption = 1;
+
+    UIViewController *rebornYouTubeDownloadViewController = self._viewControllerForAncestor;
+    [rebornYouTubeDownloadViewController presentViewController:rebornYouTubeDownloadController animated:YES completion:nil];
+}
+
+%new;
+- (void)rebornPictureInPicture :(NSString *)videoID {
+    NSString *videoTime = [NSString stringWithFormat:@"%f", [resultOut mediaTime]];
+    NSDictionary *youtubePlayerRequest = [YouTubeExtractor youtubePlayerRequest:@"ios":videoID];
+    NSURL *videoPath = [NSURL URLWithString:[NSString stringWithFormat:@"%@", youtubePlayerRequest[@"streamingData"][@"hlsManifestUrl"]]];
+
+    if ([[NSUserDefaults standardUserDefaults] boolForKey:@"kEnableBackgroundPlayback"] == YES) {
+        PictureInPictureController *pictureInPictureController = [[PictureInPictureController alloc] init];
+        pictureInPictureController.videoTime = videoTime;
+        pictureInPictureController.videoPath = videoPath;
+        UINavigationController *pictureInPictureControllerView = [[UINavigationController alloc] initWithRootViewController:pictureInPictureController];
+        pictureInPictureControllerView.modalPresentationStyle = UIModalPresentationFullScreen;
+
+        UIViewController *pictureInPictureViewController = self._viewControllerForAncestor;
+        [pictureInPictureViewController presentViewController:pictureInPictureControllerView animated:YES completion:nil];
+    } else {
+        UIAlertController *alertPip = [UIAlertController alertControllerWithTitle:LOC(@"NOTICE_TEXT") message:LOC(@"PIP_NOTICE_TEXT") preferredStyle:UIAlertControllerStyleAlert];
+
+        [alertPip addAction:[UIAlertAction actionWithTitle:LOC(@"OKAY_TEXT") style:UIAlertActionStyleCancel handler:^(UIAlertAction * _Nonnull action) {
+        }]];
+
+        UIViewController *pipViewController = [self _viewControllerForAncestor];
+        [pipViewController presentViewController:alertPip animated:YES completion:nil];
+    }
+}
+
+%new;
+- (void)rebornPlayInExternalApp :(NSString *)videoID {
+    NSDictionary *youtubePlayerRequest = [YouTubeExtractor youtubePlayerRequest:@"ios":videoID];
+    NSURL *videoPath = [NSURL URLWithString:[NSString stringWithFormat:@"%@", youtubePlayerRequest[@"streamingData"][@"hlsManifestUrl"]]];
+
+    UIAlertController *alertApp = [UIAlertController alertControllerWithTitle:LOC(@"CHOOSE_TEXT") message:nil preferredStyle:UIAlertControllerStyleAlert];
+
+    [alertApp addAction:[UIAlertAction actionWithTitle:LOC(@"INFUSE_TEXT") style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
+        [[UIApplication sharedApplication] openURL:[NSURL URLWithString:[NSString stringWithFormat:@"infuse://x-callback-url/play?url=%@", videoPath]] options:@{} completionHandler:nil];
+    }]];
+
+    [alertApp addAction:[UIAlertAction actionWithTitle:@"Play In VLC" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
+        [[UIApplication sharedApplication] openURL:[NSURL URLWithString:[NSString stringWithFormat:@"vlc-x-callback://x-callback-url/stream?url=%@", videoPath]] options:@{} completionHandler:nil];
+    }]];
+
+    [alertApp addAction:[UIAlertAction actionWithTitle:LOC(@"CANCEL_TEXT") style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
+    }]];
+
+    UIViewController *alertAppViewController = [self _viewControllerForAncestor];
+    [alertAppViewController presentViewController:alertApp animated:YES completion:nil];
+}
 %end
-*/
 
 // No YouTube Ads
 %group gNoVideoAds
@@ -943,14 +1175,6 @@ BOOL isAd(id node) {
 %end
 %end
 
-// Hide Upgrade Dialog by @arichorn
-%hook YTGlobalConfig
-- (BOOL)shouldBlockUpgradeDialog { return YES;}
-- (BOOL)shouldForceUpgrade { return NO;}
-- (BOOL)shouldShowUpgrade { return NO;}
-- (BOOL)shouldShowUpgradeDialog { return NO;}
-%end
-
 %group gBackgroundPlayback
 %hook YTIPlayerResponse
 - (BOOL)isPlayableInBackground {
@@ -990,6 +1214,42 @@ BOOL isAd(id node) {
     return YES;
 }
 %end
+%end
+
+// Disable Pinch to Zoom (video player)
+%group gDisablePinchToZoom
+%hook YTColdConfig
+- (BOOL)enableFreeZoomHaptics { return NO; }
+- (BOOL)enableFreeZoomInPotraitOrientation { return NO; }
+- (BOOL)isVideoZoomEnabled { return NO; }
+- (BOOL)uiSystemsClientGlobalConfigEnableDisplayZoomMenuBugFix { return NO; }
+- (BOOL)videoZoomFreeZoomEnabledGlobalConfig { return NO; }
+- (BOOL)videoZoomFreeZoomIndicatorPersistentGlobalConfig { return NO; }
+- (BOOL)videoZoomFreeZoomIndicatorTopGlobalConfig { return NO; }
+- (BOOL)deprecateTabletPinchFullscreenGestures { return NO; } // <-- this flag is only required for iPad Devices
+%end
+%end
+
+// YTStockVolumeHUD - https://github.com/lilacvibes/YTStockVolumeHUD
+%group gStockVolumeHUD
+%hook YTVolumeBarView
+- (void)volumeChanged:(id)arg1 {
+	%orig(nil);
+}
+%end
+%hook UIApplication 
+- (void)setSystemVolumeHUDEnabled:(BOOL)arg1 forAudioCategory:(id)arg2 {
+	%orig(true, arg2);
+}
+%end
+%end
+
+// Hide Upgrade Dialog by @arichornlover
+%hook YTGlobalConfig
+- (BOOL)shouldBlockUpgradeDialog { return YES;}
+- (BOOL)shouldForceUpgrade { return NO;}
+- (BOOL)shouldShowUpgrade { return NO;}
+- (BOOL)shouldShowUpgradeDialog { return NO;}
 %end
 
 %group gExtraSpeedOptions
@@ -1264,6 +1524,23 @@ BOOL isAd(id node) {
 %end
 %end
 
+%group gColourOptions3
+%hook YTInlinePlayerBarContainerView
+- (id)quietProgressBarColor {
+    return progressbarHexColor;
+}
+%end
+
+%hook YTSegmentableInlinePlayerBarView
+- (UIColor *)progressBarColor {
+    return progressbarHexColor;
+}
+- (UIColor *)userIsScrubbingProgressBarColor {
+    return progressbarHexColor;
+}
+%end
+%end
+
 // Auto-Hide Home Bar by @arichorn
 %group gAutoHideHomeBar
 %hook UIViewController
@@ -1514,52 +1791,29 @@ BOOL isAd(id node) {
 %end
 %end
 
-%hook YTIPivotBarItemRenderer
-- (void)viewDidLoad {
-    %orig();
-    NSArray *tabOrder = [[NSUserDefaults standardUserDefaults] objectForKey:@"kTabOrder"];
-    NSDictionary *tabPositions = @{
-        @"id.ui.pivotbar.FEwhat_to_watch.button": @(0), // Home
-        @"id.ui.pivotbar.FEshorts.button": @(1), // Shorts
-        @"id.ui.pivotbar.FEuploads.button": @(2), // Create
-        @"id.ui.pivotbar.FEsubscriptions.button": @(3), // Subscriptions
-        @"id.ui.pivotbar.FElibrary.button": @(4) // You
-    };
-    NSMutableArray *sortedTabOrder = [NSMutableArray array];
-    for (NSString *tabIdentifier in tabOrder) {
-        NSNumber *position = tabPositions[tabIdentifier];
-        if (position != nil) {
-            [sortedTabOrder addObject:@{@"identifier": tabIdentifier, @"position": position}];
+%hook YTPivotBarView // Reorder Pivot Bar - @arichornlover
+- (void)setRenderer:(YTIPivotBarRenderer *)renderer {
+    NSMutableArray<YTIPivotBarSupportedRenderers *> *items = [renderer itemsArray];
+    NSMutableArray<YTIPivotBarSupportedRenderers *> *reorderedItems = [NSMutableArray arrayWithCapacity:[items count]];
+    NSArray *presetTabOrder = @[
+        @"FEwhat_to_watch",   // Home
+        @"FEshorts",          // Shorts
+        @"FEuploads",         // Create
+        @"FEsubscriptions",   // Subscriptions
+        @"FElibrary"          // You
+    ]; 
+    for (NSString *pivotIdentifier in presetTabOrder) {
+        for (YTIPivotBarSupportedRenderers *item in items) {
+            NSString *itemIdentifier = [[item pivotBarItemRenderer] pivotIdentifier];
+            if ([pivotIdentifier isEqualToString:itemIdentifier]) {
+                [reorderedItems addObject:item];
+                break;
+            }
         }
     }
-    [sortedTabOrder sortUsingComparator:^NSComparisonResult(NSDictionary *tab1, NSDictionary *tab2) {
-        NSNumber *position1 = tab1[@"position"];
-        NSNumber *position2 = tab2[@"position"];
-        return [position1 compare:position2];
-    }];
-    NSMutableArray *reorderedTabs = [NSMutableArray array];
-    for (NSDictionary *tabInfo in sortedTabOrder) {
-        NSString *tabIdentifier = tabInfo[@"identifier"];
-        [reorderedTabs addObject:tabIdentifier];
-    }
-    [self setTabOrder:reorderedTabs];
-
-    for (int i = 0; i < reorderedTabs.count; i++) {
-        NSString *tabIdentifier = reorderedTabs[i];
-        NSString *accessibilityIdentifier = [NSString stringWithFormat:@"id.ui.pivotbar.%@.button", tabIdentifier];
-        UIView *tabView = [self findTabViewWithAccessibilityIdentifier:accessibilityIdentifier];
-        if (tabView != nil) {
-            NSIndexPath *destinationIndexPath = [NSIndexPath indexPathForRow:i inSection:0];
-        }
-    }
-}
-- (UIView *)findTabViewWithAccessibilityIdentifier:(NSString *)accessibilityIdentifier {
-    for (UITableViewCell *cell in self.tableView.visibleCells) {
-        if ([cell.accessibilityIdentifier isEqualToString:accessibilityIdentifier]) {
-            return cell.contentView;
-        }
-    }
-    return nil;
+    [items removeAllObjects];
+    [items addObjectsFromArray:reorderedItems]; 
+    %orig;
 }
 %end
 
@@ -1832,6 +2086,10 @@ BOOL selectedTabIndex = NO;
 
 %group gHideShortsLikeButton
 %hook YTReelWatchPlaybackOverlayView
+- (void)layoutSubviews {
+	%orig();
+	MSHookIvar<YTQTMButton *>(self, "_reelLikeButton").hidden = YES;
+}
 - (void)setReelLikeButton:(id)arg1 {
     %orig;
 }
@@ -1840,6 +2098,10 @@ BOOL selectedTabIndex = NO;
 
 %group gHideShortsDislikeButton
 %hook YTReelWatchPlaybackOverlayView
+- (void)layoutSubviews {
+	%orig();
+	MSHookIvar<YTQTMButton *>(self, "_reelDislikeButton").hidden = YES;
+}
 - (void)setReelDislikeButton:(id)arg1 {
     %orig;
 }
@@ -1848,6 +2110,10 @@ BOOL selectedTabIndex = NO;
 
 %group gHideShortsCommentsButton
 %hook YTReelWatchPlaybackOverlayView
+- (void)layoutSubviews {
+	%orig();
+	MSHookIvar<YTQTMButton *>(self, "_viewCommentButton").hidden = YES;
+}
 - (void)setViewCommentButton:(id)arg1 {
     %orig;
 }
@@ -1856,6 +2122,10 @@ BOOL selectedTabIndex = NO;
 
 %group gHideShortsRemixButton
 %hook YTReelWatchPlaybackOverlayView
+- (void)layoutSubviews {
+	%orig();
+	MSHookIvar<YTQTMButton *>(self, "_remixButton").hidden = YES;
+}
 - (void)setRemixButton:(id)arg1 {
     %orig;
 }
@@ -1864,6 +2134,10 @@ BOOL selectedTabIndex = NO;
 
 %group gHideShortsShareButton
 %hook YTReelWatchPlaybackOverlayView
+- (void)layoutSubviews {
+	%orig();
+	MSHookIvar<YTQTMButton *>(self, "_shareButton").hidden = YES;
+}
 - (void)setShareButton:(id)arg1 {
     %orig;
 }
@@ -2342,6 +2616,7 @@ BOOL selectedTabIndex = NO;
         if ([self.accessibilityIdentifier isEqualToString:@"id.comment.channel_guidelines_bottom_sheet_container"]) { self.backgroundColor = rebornHexColour; }
         if ([self.accessibilityIdentifier isEqualToString:@"id.comment.channel_guidelines_entry_banner_container"]) { self.backgroundColor = rebornHexColour; }
 	if ([self.accessibilityIdentifier isEqualToString:@"id.comment.comment_group_detail_container"]) { self.backgroundColor = [UIColor clearColor]; }
+        if ([self.accessibilityIdentifier hasPrefix:@"id.elements.components.overflow_menu_item_"]) { self.backgroundColor = [UIColor clearColor]; }
 }
 %end
 %end
@@ -2559,6 +2834,19 @@ NSString *customAppVersion = nil; // Declare the global variable
 }
 %end
 
+NSBundle *YouTubeRebornBundle() {
+    static NSBundle *bundle = nil;
+    static dispatch_once_t onceToken;
+	dispatch_once(&onceToken, ^{
+        NSString *tweakBundlePath = [[NSBundle mainBundle] pathForResource:@"YouTubeReborn" ofType:@"bundle"];
+        if (tweakBundlePath)
+            bundle = [NSBundle bundleWithPath:tweakBundlePath];
+        else
+            bundle = [NSBundle bundleWithPath:ROOT_PATH_NS(@"/Library/Application Support/YouTubeReborn.bundle")];
+    });
+    return bundle;
+}
+
 %ctor {
     @autoreleasepool {
         if ([[NSUserDefaults standardUserDefaults] objectForKey:@"kEnableNoVideoAds"] == nil) {
@@ -2594,15 +2882,17 @@ NSString *customAppVersion = nil; // Declare the global variable
         if ([[NSUserDefaults standardUserDefaults] boolForKey:@"kHideUploadTab"] == YES) %init(gHideUploadTab);
         if ([[NSUserDefaults standardUserDefaults] boolForKey:@"kHideSubscriptionsTab"] == YES) %init(gHideSubscriptionsTab);
         if ([[NSUserDefaults standardUserDefaults] boolForKey:@"kHideYouTab"] == YES) %init(gHideYouTab);
+        if ([[NSUserDefaults standardUserDefaults] boolForKey:@"kStockVolumeHUD"] == YES) %init(gStockVolumeHUD);
         if ([[NSUserDefaults standardUserDefaults] boolForKey:@"kHideOverlayDarkBackground"] == YES) %init(gHideOverlayDarkBackground);
+        if ([[NSUserDefaults standardUserDefaults] boolForKey:@"kHideChannelWatermark"] == YES) %init(gHideChannelWatermark);
         if ([[NSUserDefaults standardUserDefaults] boolForKey:@"kHidePreviousButtonInOverlay"] == YES) %init(gHidePreviousButtonInOverlay);
         if ([[NSUserDefaults standardUserDefaults] boolForKey:@"kHideNextButtonInOverlay"] == YES) %init(gHideNextButtonInOverlay);
         if ([[NSUserDefaults standardUserDefaults] boolForKey:@"kDisableVideoAutoPlay"] == YES) %init(gDisableVideoAutoPlay);
+        if ([[NSUserDefaults standardUserDefaults] boolForKey:@"kDisablePinchToZoom"] == YES) %init(gDisablePinchToZoom);
         if ([[NSUserDefaults standardUserDefaults] boolForKey:@"kHideAutoPlaySwitchInOverlay"] == YES) %init(gHideAutoPlaySwitchInOverlay);
         if ([[NSUserDefaults standardUserDefaults] boolForKey:@"kHideCaptionsSubtitlesButtonInOverlay"] == YES) %init(gHideCaptionsSubtitlesButtonInOverlay);
         if ([[NSUserDefaults standardUserDefaults] boolForKey:@"kDisableVideoInfoCards"] == YES) %init(gDisableVideoInfoCards);
         if ([[NSUserDefaults standardUserDefaults] boolForKey:@"kNoSearchButton"] == YES) %init(gNoSearchButton);
-        if ([[NSUserDefaults standardUserDefaults] boolForKey:@"kHideChannelWatermark"] == YES) %init(gHideChannelWatermark);
 	if ([[NSUserDefaults standardUserDefaults] boolForKey:@"kHideShortsChannelAvatarButton"] == YES) %init(gHideShortsChannelAvatarButton);
         if ([[NSUserDefaults standardUserDefaults] boolForKey:@"kHideShortsLikeButton"] == YES) %init(gHideShortsLikeButton);
         if ([[NSUserDefaults standardUserDefaults] boolForKey:@"kHideShortsDislikeButton"] == YES) %init(gHideShortsDislikeButton);
@@ -2656,6 +2946,16 @@ NSString *customAppVersion = nil; // Declare the global variable
             lcmHexColor = [lcmUnarchiver decodeObjectForKey:NSKeyedArchiveRootObjectKey];
             %init(gColourOptions2);
         }
+        NSData *progressbarColorData = [[NSUserDefaults standardUserDefaults] objectForKey:@"kYTProgreessBarColourOption"];
+        NSKeyedUnarchiver *progressbarUnarchiver = [[NSKeyedUnarchiver alloc] initForReadingFromData:progressbarColorData error:nil];
+        [progressbarUnarchiver setRequiresSecureCoding:NO];
+        NSString *progressbarHexString = [progressbarUnarchiver decodeObjectForKey:NSKeyedArchiveRootObjectKey];
+        if (progressbarHexString != nil) {
+            progressbarHexColor = [progressbarUnarchiver decodeObjectForKey:NSKeyedArchiveRootObjectKey];
+            %init(gColourOptions3);
+        }
+        NSBundle *tweakBundle = YouTubeRebornBundle();
+        TabBarOPIconPath = [tweakBundle pathForResource:@"ytrebornbuttonblack" ofType:@"png"];
         %init(_ungrouped);
     }
 }

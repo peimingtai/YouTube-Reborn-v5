@@ -16,10 +16,14 @@
 #import "YouTubeHeader/ELMNodeController.h"
 #import "YouTubeHeader/QTMIcon.h"
 #import "YouTubeHeader/YTColor.h"
+#import "YouTubeHeader/YTColorPalette.h"
+#import "YouTubeHeader/YTCommonColorPalette.h"
+#import "YouTubeHeader/YTHotConfig.h"
 #import "YouTubeHeader/YTVideoQualitySwitchOriginalController.h"
 #import "YouTubeHeader/YTVideoWithContextNode.h"
 #import "YouTubeHeader/YTIElementRenderer.h"
 #import "YouTubeHeader/YTIMenuConditionalServiceItemRenderer.h"
+#import "YouTubeHeader/YTPlaybackStrippedWatchController.h"
 #import "YouTubeHeader/YTSlimVideoDetailsActionView.h"
 #import "YouTubeHeader/YTSlimVideoScrollableActionBarCellController.h"
 #import "YouTubeHeader/YTSlimVideoScrollableDetailsActionsView.h"
@@ -38,9 +42,24 @@
 @interface YTCommentDetailHeaderCell : UIView
 @end
 
-@interface YTIPivotBarItemRender : NSObject
-@property(nonatomic, copy) NSArray *tabItems;
-@property (nonatomic, strong) UITableView *tableView;
+@interface ASCollectionView (Reborn)
+- (id)_viewControllerForAncestor;
+@property (retain, nonatomic) UIButton *rebornOverlayButton;
+@property (retain, nonatomic) YTTouchFeedbackController *rebornTouchController;
+- (id)playPauseButton;
+- (void)didPressPause:(id)button;
+- (void)didPressReborn:(UIButton *)button event:(UIEvent *)event;
+- (void)rebornOptionsAction;
+- (void)rebornVideoDownloader :(NSString *)videoID;
+- (void)rebornAudioDownloader :(NSString *)videoID;
+- (void)rebornPictureInPicture :(NSString *)videoID;
+- (void)rebornPlayInExternalApp :(NSString *)videoID;
+@end
+
+@interface ASCollectionView (YP) // YouPiP
+@property (retain, nonatomic) UIButton *pipButton;
+- (void)didPressPiP:(id)arg;
+- (UIImage *)pipImage;
 @end
 
 @interface _ASCollectionViewCell : UICollectionViewCell
@@ -145,8 +164,14 @@
 @interface YTIPivotBarItemRenderer : NSObject
 - (NSString *)pivotIdentifier;
 - (void)setTabOrder:(NSArray *)orderedTabs;
+- (void)reorderTabs;
 - (UIView *)findTabViewWithAccessibilityIdentifier:(NSString *)accessibilityIdentifier;
 @property (nonatomic, strong) UITableView *tableView;
+@property(retain, nonatomic) YTIIcon *icon;
+@property(retain, nonatomic) YTICommand *navigationEndpoint;
+@property(copy, nonatomic) NSString *pivotIdentifier;
+@property(retain, nonatomic) YTIFormattedString *title;
+@property(copy, nonatomic) NSData *trackingParams;
 @end
 
 @interface YTIPivotBarIconOnlyItemRenderer : GPBMessage
@@ -157,6 +182,7 @@
 @interface YTIPivotBarSupportedRenderers : NSObject
 - (YTIPivotBarItemRenderer *)pivotBarItemRenderer;
 - (YTIPivotBarIconOnlyItemRenderer *)pivotBarIconOnlyItemRenderer;
+@property(retain, nonatomic) YTIPivotBarItemRenderer *pivotBarItemRenderer;
 @end
 
 @interface YTIPivotBarRenderer : NSObject
@@ -200,14 +226,6 @@
 @interface YTInlinePlayerBarContainerView : UIView
 @property(readonly, nonatomic) YTLabel *durationLabel;
 @property(readonly, nonatomic) YTLabel *currentTimeLabel;
-@end
-
-@interface YTColorPalette : NSObject
-@property(readonly, nonatomic) long long pageStyle;
-@end
-
-@interface YTCommonColorPalette : NSObject
-@property(readonly, nonatomic) long long pageStyle;
 @end
 
 // YouTube Reborn Settings
