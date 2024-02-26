@@ -1,6 +1,4 @@
 #import "Tweak.h"
-#import <rootless.h>
-#import <Foundation/Foundation.h>
 
 extern NSBundle *YouTubeRebornBundle();
 
@@ -16,6 +14,7 @@ static inline NSString *LOC(NSString *key) {
 #define SYSTEM_VERSION_LESS_THAN_OR_EQUAL_TO(v)     ([[[UIDevice currentDevice] systemVersion] compare:v options:NSNumericSearch] != NSOrderedDescending)
 #define YT_BUNDLE_ID @"com.google.ios.youtube"
 #define YT_NAME @"YouTube"
+#define OPButtonType 802 // Tab Bar Button Icon
 
 static BOOL hasDeviceNotch() {
 	if ([UIDevice currentDevice].userInterfaceIdiom == UIUserInterfaceIdiomPad) {
@@ -30,6 +29,7 @@ static NSString *TabBarOPIconPath;
 
 UIColor *rebornHexColour;
 UIColor *lcmHexColor;
+UIColor *systemBlueHexColor;
 UIColor *progressbarHexColor;
 
 YTLocalPlaybackController *playingVideoID;
@@ -276,10 +276,16 @@ static NSString *accessGroupID() {
         self.youtubeRebornButton.frame = CGRectMake(0, 0, 40, 40);
         
         if ([%c(YTPageStyleController) pageStyle] == 0) {
-            [self.youtubeRebornButton setImage:[UIImage imageWithContentsOfFile:youtubeRebornDarkSettingsPath] forState:UIControlStateNormal];
+            UIImage *setButtonMode = [UIImage imageWithContentsOfFile:youtubeRebornDarkSettingsPath];
+            setButtonMode = [setButtonMode imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate];
+            [self.youtubeRebornButton setImage:setButtonMode forState:UIControlStateNormal];
+            [self.youtubeRebornButton setTintColor:UIColor.blackColor];
         }
         else if ([%c(YTPageStyleController) pageStyle] == 1) {
-            [self.youtubeRebornButton setImage:[UIImage imageWithContentsOfFile:youtubeRebornLightSettingsPath] forState:UIControlStateNormal];
+            UIImage *setButtonMode = [UIImage imageWithContentsOfFile:youtubeRebornLightSettingsPath];
+            setButtonMode = [setButtonMode imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate];
+            [self.youtubeRebornButton setImage:setButtonMode forState:UIControlStateNormal];
+            [self.youtubeRebornButton setTintColor:UIColor.whiteColor];
         }
         
         [self.youtubeRebornButton addTarget:self action:@selector(rebornRootOptionsAction) forControlEvents:UIControlEventTouchUpInside];
@@ -790,14 +796,14 @@ static NSString *accessGroupID() {
 %end
 
 // YouTube Reborn Video Player Button (v5.0.0+)
-#pragma mark - @NguyenASang - Video tab bar Reborn Download Video or Audio Button (17.01.4 and up)
+#pragma mark - Video tab bar OP Button (17.01.4 and up) - @NguyenASang
 
 static UIButton *makeUnderRebornPlayerButton(ELMCellNode *node, NSString *title, NSString *accessibilityLabel) {
     NSInteger pageStyle = [%c(YTPageStyleController) pageStyle];
-    YTColorPalette *palette = [%c(YTColorPalette) colorPaletteForPageStyle:pageStyle];
-    YTCommonColorPalette *commonPalette = pageStyle == 1 ? [%c(YTCommonColorPalette) darkPalette] : [%c(YTCommonColorPalette) lightPalette];
-    if (!commonPalette) commonPalette = [%c(YTColorPalette) colorPaletteForPageStyle:pageStyle]; // YouTube 17.18.4 and below
+    YTCommonColorPalette *palette = pageStyle == 1 ? [%c(YTCommonColorPalette) darkPalette] : [%c(YTCommonColorPalette) lightPalette];
+    if (!palette) palette = [%c(YTColorPalette) colorPaletteForPageStyle:pageStyle]; // YouTube 17.18.4 and below
     UIColor *textColor = [palette textPrimary];
+
     ELMContainerNode *containerNode = (ELMContainerNode *)[[[[node yogaChildren] firstObject] yogaChildren] firstObject]; // To get node container properties
     UIButton *buttonView = [[UIButton alloc] initWithFrame:CGRectMake(0, 0, 65, containerNode.calculatedSize.height)];
     buttonView.center = CGPointMake(CGRectGetMaxX([node.layoutAttributes frame]) + 65 / 2, CGRectGetMidY([node.layoutAttributes frame]));
@@ -815,14 +821,33 @@ static UIButton *makeUnderRebornPlayerButton(ELMCellNode *node, NSString *title,
 
     [buttonView addSubview:buttonImage];
     [buttonView addSubview:buttonTitle];
+    
+    // Check if the PiP button (for YouPiP) exists and adjust the OP button's center accordingly
+    ASCollectionView *collectionView = (ASCollectionView *)[[node closestViewController] view];
+    NSIndexPath *pipIndexPath = [collectionView indexPathForCell:collectionView.pipButton.superview.superview];
+    if (pipIndexPath) {
+        CGFloat pipOffset = [collectionView.pipButton center].x - CGRectGetMaxX([node.layoutAttributes frame]);
+        [buttonView setCenter:CGPointMake(buttonView.center.x + pipOffset, buttonView.center.y)];
+    } 
     return buttonView;
 }
+
+%hook YTIIcon
+- (UIImage *)iconImageWithColor:(UIColor *)color {
+    if (self.iconType == OPButtonType) {
+        UIImage *image = [%c(QTMIcon) tintImage:[UIImage imageWithContentsOfFile:TabBarOPIconPath] color:[[%c(YTPageStyleController) currentColorPalette] textPrimary]];
+        if ([image respondsToSelector:@selector(imageFlippedForRightToLeftLayoutDirection)])
+            image = [image imageFlippedForRightToLeftLayoutDirection];
+        return image;
+    }
+    return %orig;
+}
+%end
 
 %hook ASCollectionView
 
 %property (retain, nonatomic) UIButton *rebornOverlayButton;
 %property (retain, nonatomic) YTTouchFeedbackController *rebornTouchController;
-%property (retain, nonatomic) UIButton *pipButton; // YouPiP
 
 - (BOOL)touchesShouldCancelInContentView:(id)arg1 {
     return YES; // Ensure we can scroll
@@ -831,8 +856,9 @@ static UIButton *makeUnderRebornPlayerButton(ELMCellNode *node, NSString *title,
 - (ELMCellNode *)nodeForItemAtIndexPath:(NSIndexPath *)indexPath {
     if ([self.accessibilityIdentifier isEqual:@"id.video.scrollable_action_bar"] && !self.rebornOverlayButton) {
         self.contentInset = UIEdgeInsetsMake(0, 0, 0, 73);
-        if ([self numberOfItemsInSection:0] - 1 == indexPath.row) {
-            self.rebornOverlayButton = makeUnderRebornPlayerButton(%orig, @"OP", LOC(@"DOWNLOAD_FILES_TEXT"));
+        ELMCellNode *node = %orig;
+        if (CGRectGetMaxX([node.layoutAttributes frame]) == [self contentSize].width) {
+            self.rebornOverlayButton = makeUnderRebornPlayerButton(node, @"OP", LOC(@"DOWNLOAD_FILES_TEXT"));
             [self addSubview:self.rebornOverlayButton];
 
             [self.rebornOverlayButton addTarget:self action:@selector(didPressReborn:event:) forControlEvents:UIControlEventTouchUpInside];
@@ -845,30 +871,12 @@ static UIButton *makeUnderRebornPlayerButton(ELMCellNode *node, NSString *title,
 }
 
 - (void)nodesDidRelayout:(NSArray <ELMCellNode *> *)nodes {
-    if (self.pipButton && self.rebornOverlayButton) { // Check if YouPiP and rebornOverlayButton both exist
+    if ([self.accessibilityIdentifier isEqual:@"id.video.scrollable_action_bar"] && [nodes count] == 1) {
         CGFloat offset = nodes[0].calculatedSize.width - [nodes[0].layoutAttributes frame].size.width;
-        CGFloat rebornButtonOffset = self.pipButton.frame.size.width;
-
-        [UIView animateWithDuration:0.3 animations:^{
-            self.pipButton.center = CGPointMake(self.pipButton.center.x + offset, self.pipButton.center.y);
-            self.rebornOverlayButton.center = CGPointMake(self.rebornOverlayButton.center.x + offset + rebornButtonOffset, self.rebornOverlayButton.center.y);
-        }];
-
-    } else if (self.pipButton && !self.rebornOverlayButton) { // Check if only YouPiP Button exists
-        CGFloat offset = nodes[0].calculatedSize.width - [nodes[0].layoutAttributes frame].size.width;
-
-        [UIView animateWithDuration:0.3 animations:^{
-            self.pipButton.center = CGPointMake(self.pipButton.center.x + offset, self.pipButton.center.y);
-        }];
-
-    } else if (!self.pipButton && self.rebornOverlayButton) { // Check if only rebornOverlayButton exists
-        CGFloat offset = nodes[0].calculatedSize.width - [nodes[0].layoutAttributes frame].size.width;
-
         [UIView animateWithDuration:0.3 animations:^{
             self.rebornOverlayButton.center = CGPointMake(self.rebornOverlayButton.center.x + offset, self.rebornOverlayButton.center.y);
         }];
     }
-    
     %orig;
 }
 
@@ -884,9 +892,7 @@ static UIButton *makeUnderRebornPlayerButton(ELMCellNode *node, NSString *title,
 - (void)rebornOptionsAction {
     NSInteger videoStatus = [stateOut playerState];
     if (videoStatus == 3) {
-        YTMainAppControlsOverlayView *overlayView = [self _viewControllerForAncestor];
-        UIButton *playPauseButton = [overlayView playPauseButton];
-        [overlayView didPressPause:playPauseButton];
+        [self didPressPause:[self playPauseButton]];
     }
 
     NSString *videoIdentifier = [playingVideoID currentVideoID];
@@ -1101,67 +1107,66 @@ static UIButton *makeUnderRebornPlayerButton(ELMCellNode *node, NSString *title,
 %hook YTHotConfig
 - (BOOL)disableAfmaIdfaCollection { return NO; }
 %end
-
 %hook YTIPlayerResponse
-- (BOOL)isMonetized {
-    return NO;
-}
+- (BOOL)isMonetized { return NO; }
 %end
-
 %hook YTDataUtils
 + (id)spamSignalsDictionary { return nil; }
 + (id)spamSignalsDictionaryWithoutIDFA { return nil; }
 %end
-
 %hook YTAdsInnerTubeContextDecorator
-- (void)decorateContext:(id)arg1 {
-}
+- (void)decorateContext:(id)context {}
 %end
-
 %hook YTAccountScopedAdsInnerTubeContextDecorator
 - (void)decorateContext:(id)context {}
 %end
-
 %hook YTIElementRenderer
 - (NSData *)elementData {
     if (self.hasCompatibilityOptions && self.compatibilityOptions.hasAdLoggingData) return nil;
     return %orig;
 }
 %end
-
-BOOL isAd(id node) {
-    if ([node isKindOfClass:NSClassFromString(@"YTVideoWithContextNode")]
-        && [node respondsToSelector:@selector(parentResponder)]
-        && [[(YTVideoWithContextNode *)node parentResponder] isKindOfClass:NSClassFromString(@"YTAdVideoElementsCellController")])
+BOOL isAd(YTIElementRenderer *self) {
+    if (self == nil) return NO;
+    NSString *description = [self description];
+    if ([description containsString:@"brand_promo"]
+        || [description containsString:@"statement_banner"]
+        || [description containsString:@"product_carousel"]
+        || [description containsString:@"product_engagement_panel"]
+        || [description containsString:@"product_item"]
+        || [description containsString:@"expandable_list"]
+        || [description containsString:@"text_search_ad"]
+        || [description containsString:@"text_image_button_layout"]
+        || [description containsString:@"carousel_headered_layout"]
+        || [description containsString:@"carousel_footered_layout"]
+        || [description containsString:@"square_image_layout"]
+        || [description containsString:@"landscape_image_wide_button_layout"]
+        || [description containsString:@"feed_ad_metadata"])
         return YES;
-    if ([node isKindOfClass:NSClassFromString(@"ELMCellNode")]) {
-        NSString *description = [[[node controller] owningComponent] description];
-        if ([description containsString:@"brand_promo"]
-            || [description containsString:@"statement_banner"]
-            || [description containsString:@"product_carousel"]
-            || [description containsString:@"product_engagement_panel"]
-            || [description containsString:@"product_item"]
-            || [description containsString:@"text_search_ad"]
-            || [description containsString:@"text_image_button_layout"]
-            || [description containsString:@"carousel_headered_layout"]
-            || [description containsString:@"carousel_footered_layout"]
-            || [description containsString:@"square_image_layout"] // install app ad
-            || [description containsString:@"landscape_image_wide_button_layout"]
-            || [description containsString:@"feed_ad_metadata"])
-            return YES;
-    }
     return NO;
 }
-
-%hook YTAsyncCollectionView
-- (id)collectionView:(id)collectionView cellForItemAtIndexPath:(NSIndexPath *)indexPath {
-    id cell = %orig;
-    if ([cell isKindOfClass:NSClassFromString(@"YTCompactPromotedVideoCell")]
-        || ([cell isKindOfClass:NSClassFromString(@"_ASCollectionViewCell")]
-            && [cell respondsToSelector:@selector(node)]
-            && isAd([cell node])))
-                [self deleteItemsAtIndexPaths:[NSArray arrayWithObject:indexPath]];
-    return cell;
+%hook YTSectionListViewController
+- (void)loadWithModel:(YTISectionListRenderer *)model {
+    NSMutableArray <YTISectionListSupportedRenderers *> *contentsArray = model.contentsArray;
+    NSIndexSet *removeIndexes = [contentsArray indexesOfObjectsPassingTest:^BOOL(YTISectionListSupportedRenderers *renderers, NSUInteger idx, BOOL *stop) {
+        YTIItemSectionRenderer *sectionRenderer = renderers.itemSectionRenderer;
+        YTIItemSectionSupportedRenderers *firstObject = [sectionRenderer.contentsArray firstObject];
+        return firstObject.hasPromotedVideoRenderer || firstObject.hasCompactPromotedVideoRenderer || firstObject.hasPromotedVideoInlineMutedRenderer || isAd(firstObject.elementRenderer);
+    }];
+    [contentsArray removeObjectsAtIndexes:removeIndexes];
+    %orig;
+}
+%end
+%hook YTWatchNextResultsViewController
+- (void)loadWithModel:(YTISectionListRenderer *)_watchNextResults {
+    NSMutableArray <YTISectionListSupportedRenderers *> *contentsArray = _watchNextResults.contentsArray;
+    NSIndexSet *removeIndexes = [contentsArray indexesOfObjectsPassingTest:^BOOL(YTISectionListSupportedRenderers *renderers, NSUInteger idx, BOOL *stop) {
+        YTIItemSectionRenderer *sectionRenderer = renderers.itemSectionRenderer;
+        YTIItemSectionSupportedRenderers *firstObject = [sectionRenderer.contentsArray firstObject];
+        return firstObject.hasPromotedVideoRenderer || firstObject.hasCompactPromotedVideoRenderer || firstObject.hasPromotedVideoInlineMutedRenderer || isAd(firstObject.elementRenderer);
+    }];
+    [contentsArray removeObjectsAtIndexes:removeIndexes];
+    %orig;
 }
 %end
 %end
@@ -1524,23 +1529,6 @@ BOOL isAd(id node) {
 %end
 %end
 
-%group gColourOptions3
-%hook YTInlinePlayerBarContainerView
-- (id)quietProgressBarColor {
-    return progressbarHexColor;
-}
-%end
-
-%hook YTSegmentableInlinePlayerBarView
-- (UIColor *)progressBarColor {
-    return progressbarHexColor;
-}
-- (UIColor *)userIsScrubbingProgressBarColor {
-    return progressbarHexColor;
-}
-%end
-%end
-
 // Auto-Hide Home Bar by @arichorn
 %group gAutoHideHomeBar
 %hook UIViewController
@@ -1791,6 +1779,350 @@ BOOL isAd(id node) {
 %end
 %end
 
+/*
+BOOL sponsorBlockEnabled;
+BOOL sponsorSkipCheck;
+BOOL sponsorSkipShowing;
+NSDictionary *sponsorBlockValues = [[NSDictionary alloc] init];
+
+%hook YTPlayerViewController
+- (void)playbackController:(id)arg1 didActivateVideo:(id)arg2 withPlaybackData:(id)arg3 {
+    sponsorBlockEnabled = NO;
+    sponsorSkipCheck = NO;
+    sponsorSkipShowing = NO;
+    %orig();
+    NSString *options = @"[%22sponsor%22,%22selfpromo%22,%22interaction%22,%22intro%22,%22outro%22,%22preview%22,%22filler%22,%22music_offtopic%22]";
+    NSURLRequest *request;
+    if (![[NSUserDefaults standardUserDefaults] integerForKey:@"kSourceSegmentedInt"] || [[NSUserDefaults standardUserDefaults] integerForKey:@"kSourceSegmentedInt"] == 0) {
+        request = [NSURLRequest requestWithURL:[NSURL URLWithString:[NSString stringWithFormat:@"https://sponsor.ajay.app/api/skipSegments?videoID=%@&categories=%@", self.currentVideoID, options]]];
+    }
+    if ([[NSUserDefaults standardUserDefaults] integerForKey:@"kSourceSegmentedInt"] == 1) {
+        request = [NSURLRequest requestWithURL:[NSURL URLWithString:[NSString stringWithFormat:@"https://sponsorblock.kavin.rocks/api/skipSegments?videoID=%@&categories=%@", self.currentVideoID, options]]];
+    }
+    [[[NSURLSession sharedSession] dataTaskWithRequest:request completionHandler:^(NSData *data, NSURLResponse *response, NSError *error) {
+        if (!error) {
+            NSDictionary *jsonResponse = [NSJSONSerialization JSONObjectWithData:data options:0 error:nil];
+            if ([NSJSONSerialization isValidJSONObject:jsonResponse]) {
+                sponsorBlockValues = jsonResponse;
+                sponsorBlockEnabled = YES;
+            } else {
+                sponsorBlockEnabled = NO;
+            }
+        } else if (error) {
+            sponsorBlockEnabled = NO;
+        }
+    }] resume];
+}
+- (void)singleVideo:(id)video currentVideoTimeDidChange:(YTSingleVideoTime *)time {
+    %orig();
+    if (sponsorBlockEnabled && [NSJSONSerialization isValidJSONObject:sponsorBlockValues]) {
+        for (NSMutableDictionary *jsonDictionary in sponsorBlockValues) {
+            if ([[jsonDictionary objectForKey:@"category"] isEqual:@"sponsor"] && [[NSUserDefaults standardUserDefaults] integerForKey:@"kSponsorSegmentedInt"] && self.currentVideoMediaTime >= [[jsonDictionary objectForKey:@"segment"][0] floatValue] && self.currentVideoMediaTime <= ([[jsonDictionary objectForKey:@"segment"][1] floatValue] - 1)) {
+                if ([[NSUserDefaults standardUserDefaults] integerForKey:@"kSponsorSegmentedInt"] == 1) {
+                    [self seekToTime:[[jsonDictionary objectForKey:@"segment"][1] floatValue]];
+                }
+                if ([[NSUserDefaults standardUserDefaults] integerForKey:@"kSponsorSegmentedInt"] == 2 && !sponsorSkipShowing && !sponsorSkipCheck) {
+                    sponsorSkipShowing = YES;
+                    UIAlertController *alertSkip = [UIAlertController alertControllerWithTitle:LOC(@"SPONSOR_DETECTED") message:LOC(@"WOULD_YOU_LIKE_TO_SKIP") preferredStyle:UIAlertControllerStyleAlert];
+
+                    [alertSkip addAction:[UIAlertAction actionWithTitle:LOC(@"NO_TEXT") style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
+                        sponsorSkipCheck = YES;
+                        sponsorSkipShowing = NO;
+                    }]];
+
+                    [alertSkip addAction:[UIAlertAction actionWithTitle:LOC(@"YES_TEXT") style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
+                        sponsorSkipCheck = YES;
+                        [self seekToTime:[[jsonDictionary objectForKey:@"segment"][1] floatValue]];
+                        sponsorSkipCheck = NO;
+                        sponsorSkipShowing = NO;
+                    }]];
+
+                    UIViewController *topViewController = [[[[UIApplication sharedApplication] windows] firstObject] rootViewController];
+                    while (true) {
+                        if (topViewController.presentedViewController) {
+                            topViewController = topViewController.presentedViewController;
+                        } else if ([topViewController isKindOfClass:[UINavigationController class]]) {
+                            UINavigationController *nav = (UINavigationController *)topViewController;
+                            topViewController = nav.topViewController;
+                        } else if ([topViewController isKindOfClass:[UITabBarController class]]) {
+                            UITabBarController *tab = (UITabBarController *)topViewController;
+                            topViewController = tab.selectedViewController;
+                        } else {
+                            break;
+                        }
+                    }
+                    [topViewController presentViewController:alertSkip animated:YES completion:nil];
+                }
+                break;
+            } else if ([[jsonDictionary objectForKey:@"category"] isEqual:@"selfpromo"] && [[NSUserDefaults standardUserDefaults] integerForKey:@"kSelfPromoSegmentedInt"] && self.currentVideoMediaTime >= [[jsonDictionary objectForKey:@"segment"][0] floatValue] && self.currentVideoMediaTime <= ([[jsonDictionary objectForKey:@"segment"][1] floatValue] - 1)) {
+                if ([[NSUserDefaults standardUserDefaults] integerForKey:@"kSelfPromoSegmentedInt"] == 1) {
+                    [self seekToTime:[[jsonDictionary objectForKey:@"segment"][1] floatValue]];
+                }
+                if ([[NSUserDefaults standardUserDefaults] integerForKey:@"kSelfPromoSegmentedInt"] == 2 && !sponsorSkipShowing && !sponsorSkipCheck) {
+                    sponsorSkipShowing = YES;
+                    UIAlertController *alertSkip = [UIAlertController alertControllerWithTitle:LOC(@"SELFPROMO_DETECTED") message:LOC(@"WOULD_YOU_LIKE_TO_SKIP") preferredStyle:UIAlertControllerStyleAlert];
+
+                    [alertSkip addAction:[UIAlertAction actionWithTitle:LOC(@"NO_TEXT") style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
+                        sponsorSkipCheck = YES;
+                        sponsorSkipShowing = NO;
+                    }]];
+
+                    [alertSkip addAction:[UIAlertAction actionWithTitle:LOC(@"YES_TEXT") style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
+                        sponsorSkipCheck = YES;
+                        [self seekToTime:[[jsonDictionary objectForKey:@"segment"][1] floatValue]];
+                        sponsorSkipCheck = NO;
+                        sponsorSkipShowing = NO;
+                    }]];
+
+                    UIViewController *topViewController = [[[[UIApplication sharedApplication] windows] firstObject] rootViewController];
+                    while (true) {
+                        if (topViewController.presentedViewController) {
+                            topViewController = topViewController.presentedViewController;
+                        } else if ([topViewController isKindOfClass:[UINavigationController class]]) {
+                            UINavigationController *nav = (UINavigationController *)topViewController;
+                            topViewController = nav.topViewController;
+                        } else if ([topViewController isKindOfClass:[UITabBarController class]]) {
+                            UITabBarController *tab = (UITabBarController *)topViewController;
+                            topViewController = tab.selectedViewController;
+                        } else {
+                            break;
+                        }
+                    }
+                    [topViewController presentViewController:alertSkip animated:YES completion:nil];
+                }
+                break;
+            } else if ([[jsonDictionary objectForKey:@"category"] isEqual:@"interaction"] && [[NSUserDefaults standardUserDefaults] integerForKey:@"kInteractionSegmentedInt"] && self.currentVideoMediaTime >= [[jsonDictionary objectForKey:@"segment"][0] floatValue] && self.currentVideoMediaTime <= ([[jsonDictionary objectForKey:@"segment"][1] floatValue] - 1)) {
+                if ([[NSUserDefaults standardUserDefaults] integerForKey:@"kInteractionSegmentedInt"] == 1) {
+                    [self seekToTime:[[jsonDictionary objectForKey:@"segment"][1] floatValue]];
+                }
+                if ([[NSUserDefaults standardUserDefaults] integerForKey:@"kInteractionSegmentedInt"] == 2 && !sponsorSkipShowing && !sponsorSkipCheck) {
+                    sponsorSkipShowing = YES;
+                    UIAlertController *alertSkip = [UIAlertController alertControllerWithTitle:LOC(@"INTERACTION_DETECTED") message:LOC(@"WOULD_YOU_LIKE_TO_SKIP") preferredStyle:UIAlertControllerStyleAlert];
+
+                    [alertSkip addAction:[UIAlertAction actionWithTitle:LOC(@"NO_TEXT") style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
+                        sponsorSkipCheck = YES;
+                        sponsorSkipShowing = NO;
+                    }]];
+
+                    [alertSkip addAction:[UIAlertAction actionWithTitle:LOC(@"YES_TEXT") style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
+                        sponsorSkipCheck = YES;
+                        [self seekToTime:[[jsonDictionary objectForKey:@"segment"][1] floatValue]];
+                        sponsorSkipCheck = NO;
+                        sponsorSkipShowing = NO;
+                    }]];
+
+                    UIViewController *topViewController = [[[[UIApplication sharedApplication] windows] firstObject] rootViewController];
+                    while (true) {
+                        if (topViewController.presentedViewController) {
+                            topViewController = topViewController.presentedViewController;
+                        } else if ([topViewController isKindOfClass:[UINavigationController class]]) {
+                            UINavigationController *nav = (UINavigationController *)topViewController;
+                            topViewController = nav.topViewController;
+                        } else if ([topViewController isKindOfClass:[UITabBarController class]]) {
+                            UITabBarController *tab = (UITabBarController *)topViewController;
+                            topViewController = tab.selectedViewController;
+                        } else {
+                            break;
+                        }
+                    }
+                    [topViewController presentViewController:alertSkip animated:YES completion:nil];
+                }
+                break;
+            } else if ([[jsonDictionary objectForKey:@"category"] isEqual:@"intro"] && [[NSUserDefaults standardUserDefaults] integerForKey:@"kIntroSegmentedInt"] && self.currentVideoMediaTime >= [[jsonDictionary objectForKey:@"segment"][0] floatValue] && self.currentVideoMediaTime <= ([[jsonDictionary objectForKey:@"segment"][1] floatValue] - 1)) {
+                if ([[NSUserDefaults standardUserDefaults] integerForKey:@"kIntroSegmentedInt"] == 1) {
+                    [self seekToTime:[[jsonDictionary objectForKey:@"segment"][1] floatValue]];
+                }
+                if ([[NSUserDefaults standardUserDefaults] integerForKey:@"kIntroSegmentedInt"] == 2 && !sponsorSkipShowing && !sponsorSkipCheck) {
+                    sponsorSkipShowing = YES;
+                    UIAlertController *alertSkip = [UIAlertController alertControllerWithTitle:LOC(@"INTRO_DETECTED") message:LOC(@"WOULD_YOU_LIKE_TO_SKIP") preferredStyle:UIAlertControllerStyleAlert];
+
+                    [alertSkip addAction:[UIAlertAction actionWithTitle:LOC(@"NO_TEXT") style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
+                        sponsorSkipCheck = YES;
+                        sponsorSkipShowing = NO;
+                    }]];
+
+                    [alertSkip addAction:[UIAlertAction actionWithTitle:LOC(@"YES_TEXT") style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
+                        sponsorSkipCheck = YES;
+                        [self seekToTime:[[jsonDictionary objectForKey:@"segment"][1] floatValue]];
+                        sponsorSkipCheck = NO;
+                        sponsorSkipShowing = NO;
+                    }]];
+
+                    UIViewController *topViewController = [[[[UIApplication sharedApplication] windows] firstObject] rootViewController];
+                    while (true) {
+                        if (topViewController.presentedViewController) {
+                            topViewController = topViewController.presentedViewController;
+                        } else if ([topViewController isKindOfClass:[UINavigationController class]]) {
+                            UINavigationController *nav = (UINavigationController *)topViewController;
+                            topViewController = nav.topViewController;
+                        } else if ([topViewController isKindOfClass:[UITabBarController class]]) {
+                            UITabBarController *tab = (UITabBarController *)topViewController;
+                            topViewController = tab.selectedViewController;
+                        } else {
+                            break;
+                        }
+                    }
+                    [topViewController presentViewController:alertSkip animated:YES completion:nil];
+                }
+                break;
+            } else if ([[jsonDictionary objectForKey:@"category"] isEqual:@"outro"] && [[NSUserDefaults standardUserDefaults] integerForKey:@"kOutroSegmentedInt"] && self.currentVideoMediaTime >= [[jsonDictionary objectForKey:@"segment"][0] floatValue] && self.currentVideoMediaTime <= ([[jsonDictionary objectForKey:@"segment"][1] floatValue] - 1)) {
+                if ([[NSUserDefaults standardUserDefaults] integerForKey:@"kOutroSegmentedInt"] == 1) {
+                    [self seekToTime:[[jsonDictionary objectForKey:@"segment"][1] floatValue]];
+                }
+                if ([[NSUserDefaults standardUserDefaults] integerForKey:@"kOutroSegmentedInt"] == 2 && !sponsorSkipShowing && !sponsorSkipCheck) {
+                    sponsorSkipShowing = YES;
+                    UIAlertController *alertSkip = [UIAlertController alertControllerWithTitle:@"OUTRO_DETECTED" message:LOC(@"WOULD_YOU_LIKE_TO_SKIP") preferredStyle:UIAlertControllerStyleAlert];
+
+                    [alertSkip addAction:[UIAlertAction actionWithTitle:LOC(@"NO_TEXT") style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
+                        sponsorSkipCheck = YES;
+                        sponsorSkipShowing = NO;
+                    }]];
+
+                    [alertSkip addAction:[UIAlertAction actionWithTitle:LOC(@"YES_TEXT") style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
+                        sponsorSkipCheck = YES;
+                        [self seekToTime:[[jsonDictionary objectForKey:@"segment"][1] floatValue]];
+                        sponsorSkipCheck = NO;
+                        sponsorSkipShowing = NO;
+                    }]];
+
+                    UIViewController *topViewController = [[[[UIApplication sharedApplication] windows] firstObject] rootViewController];
+                    while (true) {
+                        if (topViewController.presentedViewController) {
+                            topViewController = topViewController.presentedViewController;
+                        } else if ([topViewController isKindOfClass:[UINavigationController class]]) {
+                            UINavigationController *nav = (UINavigationController *)topViewController;
+                            topViewController = nav.topViewController;
+                        } else if ([topViewController isKindOfClass:[UITabBarController class]]) {
+                            UITabBarController *tab = (UITabBarController *)topViewController;
+                            topViewController = tab.selectedViewController;
+                        } else {
+                            break;
+                        }
+                    }
+                    [topViewController presentViewController:alertSkip animated:YES completion:nil];
+                }
+                break;
+            } else if ([[jsonDictionary objectForKey:@"category"] isEqual:@"preview"] && [[NSUserDefaults standardUserDefaults] integerForKey:@"kPreviewSegmentedInt"] && self.currentVideoMediaTime >= [[jsonDictionary objectForKey:@"segment"][0] floatValue] && self.currentVideoMediaTime <= ([[jsonDictionary objectForKey:@"segment"][1] floatValue] - 1)) {
+                if ([[NSUserDefaults standardUserDefaults] integerForKey:@"kPreviewSegmentedInt"] == 1) {
+                    [self seekToTime:[[jsonDictionary objectForKey:@"segment"][1] floatValue]];
+                }
+                if ([[NSUserDefaults standardUserDefaults] integerForKey:@"kPreviewSegmentedInt"] == 2 && !sponsorSkipShowing && !sponsorSkipCheck) {
+                    sponsorSkipShowing = YES;
+                    UIAlertController *alertSkip = [UIAlertController alertControllerWithTitle:LOC(@"PREVIEW_DETECTED") message:LOC(@"WOULD_YOU_LIKE_TO_SKIP") preferredStyle:UIAlertControllerStyleAlert];
+
+                    [alertSkip addAction:[UIAlertAction actionWithTitle:LOC(@"NO_TEXT") style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
+                        sponsorSkipCheck = YES;
+                        sponsorSkipShowing = NO;
+                    }]];
+
+                    [alertSkip addAction:[UIAlertAction actionWithTitle:LOC(@"YES_TEXT") style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
+                        sponsorSkipCheck = YES;
+                        [self seekToTime:[[jsonDictionary objectForKey:@"segment"][1] floatValue]];
+                        sponsorSkipCheck = NO;
+                        sponsorSkipShowing = NO;
+                    }]];
+
+                    UIViewController *topViewController = [[[[UIApplication sharedApplication] windows] firstObject] rootViewController];
+                    while (true) {
+                        if (topViewController.presentedViewController) {
+                            topViewController = topViewController.presentedViewController;
+                        } else if ([topViewController isKindOfClass:[UINavigationController class]]) {
+                            UINavigationController *nav = (UINavigationController *)topViewController;
+                            topViewController = nav.topViewController;
+                        } else if ([topViewController isKindOfClass:[UITabBarController class]]) {
+                            UITabBarController *tab = (UITabBarController *)topViewController;
+                            topViewController = tab.selectedViewController;
+                        } else {
+                            break;
+                        }
+                    }
+                    [topViewController presentViewController:alertSkip animated:YES completion:nil];
+                }
+                break;
+            } else if ([[jsonDictionary objectForKey:@"category"] isEqual:@"filler"] && [[NSUserDefaults standardUserDefaults] integerForKey:@"kFillerSegmentedInt"] && self.currentVideoMediaTime >= [[jsonDictionary objectForKey:@"segment"][0] floatValue] && self.currentVideoMediaTime <= ([[jsonDictionary objectForKey:@"segment"][1] floatValue] - 1)) {
+                if ([[NSUserDefaults standardUserDefaults] integerForKey:@"kFillerSegmentedInt"] == 1) {
+                    [self seekToTime:[[jsonDictionary objectForKey:@"segment"][1] floatValue]];
+                }
+                if ([[NSUserDefaults standardUserDefaults] integerForKey:@"kFillerSegmentedInt"] == 2 && !sponsorSkipShowing && !sponsorSkipCheck) {
+                    sponsorSkipShowing = YES;
+                    UIAlertController *alertSkip = [UIAlertController alertControllerWithTitle:LOC(@"FILLER_DETECTED") message:LOC(@"WOULD_YOU_LIKE_TO_SKIP") preferredStyle:UIAlertControllerStyleAlert];
+
+                    [alertSkip addAction:[UIAlertAction actionWithTitle:LOC(@"NO_TEXT") style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
+                        sponsorSkipCheck = YES;
+                        sponsorSkipShowing = NO;
+                    }]];
+
+                    [alertSkip addAction:[UIAlertAction actionWithTitle:LOC(@"YES_TEXT") style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
+                        sponsorSkipCheck = YES;
+                        [self seekToTime:[[jsonDictionary objectForKey:@"segment"][1] floatValue]];
+                        sponsorSkipCheck = NO;
+                        sponsorSkipShowing = NO;
+                    }]];
+
+                    UIViewController *topViewController = [[[[UIApplication sharedApplication] windows] firstObject] rootViewController];
+                    while (true) {
+                        if (topViewController.presentedViewController) {
+                            topViewController = topViewController.presentedViewController;
+                        } else if ([topViewController isKindOfClass:[UINavigationController class]]) {
+                            UINavigationController *nav = (UINavigationController *)topViewController;
+                            topViewController = nav.topViewController;
+                        } else if ([topViewController isKindOfClass:[UITabBarController class]]) {
+                            UITabBarController *tab = (UITabBarController *)topViewController;
+                            topViewController = tab.selectedViewController;
+                        } else {
+                            break;
+                        }
+                    }
+                    [topViewController presentViewController:alertSkip animated:YES completion:nil];
+                }
+                break;
+            } else if ([[jsonDictionary objectForKey:@"category"] isEqual:@"music_offtopic"] && [[NSUserDefaults standardUserDefaults] integerForKey:@"kMusicOffTopicSegmentedInt"] && self.currentVideoMediaTime >= [[jsonDictionary objectForKey:@"segment"][0] floatValue] && self.currentVideoMediaTime <= ([[jsonDictionary objectForKey:@"segment"][1] floatValue] - 1)) {
+                if ([[NSUserDefaults standardUserDefaults] integerForKey:@"kMusicOffTopicSegmentedInt"] == 1) {
+                    [self seekToTime:[[jsonDictionary objectForKey:@"segment"][1] floatValue]];
+                }
+                if ([[NSUserDefaults standardUserDefaults] integerForKey:@"kMusicOffTopicSegmentedInt"] == 2 && !sponsorSkipShowing && !sponsorSkipCheck) {
+                    sponsorSkipShowing = YES;
+                    UIAlertController *alertSkip = [UIAlertController alertControllerWithTitle:LOC(@"MUSIC_OFFTOPIC_DETECTED") message:LOC(@"WOULD_YOU_LIKE_TO_SKIP") preferredStyle:UIAlertControllerStyleAlert];
+
+                    [alertSkip addAction:[UIAlertAction actionWithTitle:LOC(@"NO_TEXT") style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
+                        sponsorSkipCheck = YES;
+                        sponsorSkipShowing = NO;
+                    }]];
+
+                    [alertSkip addAction:[UIAlertAction actionWithTitle:LOC(@"YES_TEXT") style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
+                        sponsorSkipCheck = YES;
+                        [self seekToTime:[[jsonDictionary objectForKey:@"segment"][1] floatValue]];
+                        sponsorSkipCheck = NO;
+                        sponsorSkipShowing = NO;
+                    }]];
+
+                    UIViewController *topViewController = [[[[UIApplication sharedApplication] windows] firstObject] rootViewController];
+                    while (true) {
+                        if (topViewController.presentedViewController) {
+                            topViewController = topViewController.presentedViewController;
+                        } else if ([topViewController isKindOfClass:[UINavigationController class]]) {
+                            UINavigationController *nav = (UINavigationController *)topViewController;
+                            topViewController = nav.topViewController;
+                        } else if ([topViewController isKindOfClass:[UITabBarController class]]) {
+                            UITabBarController *tab = (UITabBarController *)topViewController;
+                            topViewController = tab.selectedViewController;
+                        } else {
+                            break;
+                        }
+                    }
+                    [topViewController presentViewController:alertSkip animated:YES completion:nil];
+                }
+                break;
+            } else {
+                sponsorSkipCheck = NO;
+            }
+        }
+    }
+}
+%end
+*/
+
+/* BROKEN
 %hook YTPivotBarView // Reorder Pivot Bar - @arichornlover
 - (void)setRenderer:(YTIPivotBarRenderer *)renderer {
     NSMutableArray<YTIPivotBarSupportedRenderers *> *items = [renderer itemsArray];
@@ -1816,6 +2148,7 @@ BOOL isAd(id node) {
     %orig;
 }
 %end
+*/
 
 BOOL selectedTabIndex = NO;
 
@@ -2067,12 +2400,12 @@ BOOL selectedTabIndex = NO;
 %end
 
 %group gHideChannelWatermark
-%hook YTMainAppVideoPlayerOverlayView
-- (BOOL)isWatermarkEnabled { return NO; }
-%end
-%hook YTAnnotationsViewController // Deprecated
+%hook YTAnnotationsViewController // Deprecated (works if iosEnableFeaturedChannelWatermarkOverlayFix is off)
 - (void)loadFeaturedChannelWatermark {
 }
+%end
+%hook YTColdConfig
+- (BOOL)iosEnableFeaturedChannelWatermarkOverlayFix { return NO; }
 %end
 %end
 
@@ -2146,6 +2479,10 @@ BOOL selectedTabIndex = NO;
 
 %group gHideShortsMoreActionsButton
 %hook YTReelWatchPlaybackOverlayView
+- (void)layoutSubviews {
+	%orig();
+	MSHookIvar<YTQTMButton *>(self, "_moreButton").hidden = YES;
+}
 - (void)setMoreButton:(id)arg1 {
     %orig;
 }
@@ -2210,7 +2547,7 @@ BOOL selectedTabIndex = NO;
 %end
 %end
 
-%group gColourOptions
+%group gColourOptions // Custom Theme color
 %hook YTCommonColorPalette
 - (UIColor *)background1 {
     return rebornHexColour;
@@ -2621,6 +2958,35 @@ BOOL selectedTabIndex = NO;
 %end
 %end
 
+%group gColourOptions3 // Custom SystemBlue color
+%hook UIColor
++ (UIColor *)systemBlueColor {
+    if (systemBlueHexColor) {
+        return systemBlueHexColor;
+    } else {
+        return [UIColor systemBlueColor];
+    }
+}
+%end
+%end
+
+%group gColourOptions4 // Custom Progress Bar color
+%hook YTInlinePlayerBarContainerView
+- (id)quietProgressBarColor {
+    return progressbarHexColor;
+}
+%end
+
+%hook YTSegmentableInlinePlayerBarView
+- (UIColor *)progressBarColor {
+    return progressbarHexColor;
+}
+- (UIColor *)userIsScrubbingProgressBarColor {
+    return progressbarHexColor;
+}
+%end
+%end
+
 %group gAutoFullScreen
 %hook YTPlayerViewController
 - (void)loadWithPlayerTransition:(id)arg1 playbackConfig:(id)arg2 {
@@ -2817,20 +3183,48 @@ BOOL selectedTabIndex = NO;
 %end
 %end
 
-// App Version Spoofer (YouTube Reborn Version) - @arichorn
-%hook YTVersionUtils
-NSString *customAppVersion = nil; // Declare the global variable
-+ (NSString *)appVersion {
-    if (customAppVersion) {
-        return customAppVersion;
-    }
-    return %orig;
-}
-%end
-
 %hook YTColdConfig
 - (BOOL)shouldUseAppThemeSetting {
     return YES;
+}
+%end
+
+// Hide the (Connect / Share / Remix / Thanks / Download / Clip / Save) Buttons under the Video Player - 17.x.x and up - @arichornlover
+%hook _ASDisplayView
+- (void)layoutSubviews {
+    %orig; 
+    NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
+    BOOL hideConnectButton = [defaults boolForKey:@"kHideConnectButton"];
+    BOOL hideShareButton = [defaults boolForKey:@"kHideShareButton"];
+    BOOL hideRemixButton = [defaults boolForKey:@"kHideRemixButton"];
+    BOOL hideThanksButton = [defaults boolForKey:@"kHideThanksButton"];
+    BOOL hideAddToOfflineButton = [defaults boolForKey:@"kHideAddToOfflineButton"];
+    BOOL hideClipButton = [defaults boolForKey:@"kHideClipButton"];
+    BOOL hideSaveToPlaylistButton = [defaults boolForKey:@"kHideSaveToPlaylistButton"];
+    for (UIView *subview in self.subviews) {
+        if ([subview.accessibilityLabel isEqualToString:@"connect account"]) {
+            subview.hidden = hideConnectButton;
+            subview.frame = CGRectZero;
+        } else if ([subview.accessibilityIdentifier isEqualToString:@"id.video.share.button"] || [subview.accessibilityLabel isEqualToString:@"Share"]) {
+            subview.hidden = hideShareButton;
+            subview.frame = CGRectZero;
+        } else if ([subview.accessibilityIdentifier isEqualToString:@"id.video.remix.button"] || [subview.accessibilityLabel isEqualToString:@"Create a Short with this video"]) {
+            subview.hidden = hideRemixButton;
+            subview.frame = CGRectZero;
+        } else if ([subview.accessibilityLabel isEqualToString:@"Thanks"]) {
+            subview.hidden = hideThanksButton;
+            subview.frame = CGRectZero;
+        } else if ([subview.accessibilityIdentifier isEqualToString:@"id.ui.add_to.offline.button"] || [subview.accessibilityLabel isEqualToString:@"Download"]) {
+            subview.hidden = hideAddToOfflineButton;
+            subview.frame = CGRectZero;
+        } else if ([subview.accessibilityLabel isEqualToString:@"Clip"]) {
+            subview.hidden = hideClipButton;
+            subview.frame = CGRectZero;
+        } else if ([subview.accessibilityLabel isEqualToString:@"Save to playlist"]) {
+            subview.hidden = hideSaveToPlaylistButton;
+            subview.frame = CGRectZero;
+        }
+    }
 }
 %end
 
@@ -2946,13 +3340,21 @@ NSBundle *YouTubeRebornBundle() {
             lcmHexColor = [lcmUnarchiver decodeObjectForKey:NSKeyedArchiveRootObjectKey];
             %init(gColourOptions2);
         }
+        NSData *systemBlueColorData = [[NSUserDefaults standardUserDefaults] objectForKey:@"kCustomSystemBlueColor"];
+        NSKeyedUnarchiver *systemBlueUnarchiver = [[NSKeyedUnarchiver alloc] initForReadingFromData:systemBlueColorData error:nil];
+        [systemBlueUnarchiver setRequiresSecureCoding:NO];
+        NSString *systemBlueHexString = [systemBlueUnarchiver decodeObjectForKey:NSKeyedArchiveRootObjectKey];
+        if (systemBlueHexString != nil) {
+            systemBlueHexColor = [systemBlueUnarchiver decodeObjectForKey:NSKeyedArchiveRootObjectKey];
+            %init(gColourOptions3);
+        }
         NSData *progressbarColorData = [[NSUserDefaults standardUserDefaults] objectForKey:@"kYTProgreessBarColourOption"];
         NSKeyedUnarchiver *progressbarUnarchiver = [[NSKeyedUnarchiver alloc] initForReadingFromData:progressbarColorData error:nil];
         [progressbarUnarchiver setRequiresSecureCoding:NO];
         NSString *progressbarHexString = [progressbarUnarchiver decodeObjectForKey:NSKeyedArchiveRootObjectKey];
         if (progressbarHexString != nil) {
             progressbarHexColor = [progressbarUnarchiver decodeObjectForKey:NSKeyedArchiveRootObjectKey];
-            %init(gColourOptions3);
+            %init(gColourOptions4);
         }
         NSBundle *tweakBundle = YouTubeRebornBundle();
         TabBarOPIconPath = [tweakBundle pathForResource:@"ytrebornbuttonblack" ofType:@"png"];

@@ -1,3 +1,4 @@
+/*
 #import "ReorderPivotBarController.h"
 #import "Localization.h"
 
@@ -14,8 +15,8 @@
     UIBarButtonItem *doneButton = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemDone target:self action:@selector(done)];
     UIBarButtonItem *saveButton = [[UIBarButtonItem alloc] initWithTitle:LOC(@"SAVE_TEXT") style:UIBarButtonItemStylePlain target:self action:@selector(save)];
     UIBarButtonItem *resetButton = [[UIBarButtonItem alloc] initWithTitle:LOC(@"RESET_TEXT") style:UIBarButtonItemStylePlain target:self action:@selector(reset)];
-    self.navigationItem.leftBarButtonItems = @[saveButton, resetButton];
-    self.navigationItem.rightBarButtonItem = doneButton;
+    self.navigationItem.leftBarButtonItems = doneButton;
+    self.navigationItem.rightBarButtonItem = @[resetButton, saveButton];
 
     UITableViewStyle style;
     if (@available(iOS 13, *)) {
@@ -52,7 +53,7 @@
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section {
     if (section == 0) {
-        return self.tabOrder.count;
+        return 5;
     }
     return 0;
 }
@@ -93,8 +94,8 @@
 }
 
 - (void)tableView:(UITableView *)tableView moveRowAtIndexPath:(NSIndexPath *)sourceIndexPath toIndexPath:(NSIndexPath *)destinationIndexPath {
-    NSInteger sourceIndex = sourceIndexPath.row;
     NSInteger destinationIndex = destinationIndexPath.row;
+    NSInteger sourceIndex = sourceIndexPath.row;
 
     NSString *tabIdentifier = self.tabOrder[sourceIndex];
     [self.tabOrder removeObjectAtIndex:sourceIndex];
@@ -107,7 +108,6 @@
         NSIndexPath *indexPath = [self.tableView indexPathForRowAtPoint:location];
         if (indexPath && indexPath.section == 0) {
             [self.tableView setEditing:YES animated:YES];
-            NSInteger sourceIndex = indexPath.row;
             NSInteger destinationIndex = [self.tableView numberOfRowsInSection:0] - 1;
             NSIndexPath *destinationIndexPath = [NSIndexPath indexPathForRow:destinationIndex inSection:0];
             [self.tableView moveRowAtIndexPath:indexPath toIndexPath:destinationIndexPath];
@@ -138,3 +138,4 @@
 }
 
 @end
+*/

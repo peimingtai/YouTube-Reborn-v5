@@ -1,8 +1,12 @@
 // Actions/Prompts
+"SEARCH_TEXT" = "搜索";
 "CANCEL_TEXT" = "取消";
 "RESET_TEXT" = "重置";
 "SAVE_TEXT" = "保存";
 "OKAY_TEXT" = "好的";
+"YES_TEXT" = "是";
+"NO_TEXT" = "不";
+"MORE_TEXT" = "更多";
 "NOTICE_TEXT" = "注意";
 "COLOR_SAVED" = "颜色已保存";
 "IMPORT_VIDEO" = "将视频导入相册";
@@ -12,6 +16,7 @@
 "APPLY_TEXT" = "应用";
 
 // Downloads
+"ALL_TAB" = "全部";
 "VIDEO_TAB" = "视频";
 "AUDIO_TAB" = "音频";
 "DOWNLOAD_NOTICE" = "不要退出应用程序\n下载完成后将自动关闭";
@@ -26,12 +31,26 @@
 "PROGRESS_TEXT" = "进度: %.02f%%";
 "DOWNLOAD_AUDIO" = "下载音频";
 "DOWNLOAD_VIDEO" = "下载视频";
+"EDIT_FILE_NAME" = "编辑文件名";
+"IMPORT_TO_DOWNLOADS" = "导入到下载";
+"IMPORT_ERROR" = "文件导入失败！";
+"FILE_ALREADY_IMPORTED" = "❔该文件早已导入到Downloads文件夹中。";
+"SUCCESSFULLY_IMPORTED_FILE" = "文件导入成功！";
+"FILE_IMPORTED" = "✅ 文件已成功导入到Downloads文件夹。";
 "PLAY_APP_TEXT" = "用第三方程序播放";
 "CHOOSE_TEXT" = "选择应用程序";
 "INFUSE_TEXT" = "用 Infuse 播放";
 "VLC_TEXT" = "用 VLC 播放";
 "DOWNLOAD_NOTICE_TEXT" = "请先暂停视频再继续";
 "DOWNLOAD_FILES_TEXT" = "下载音频或视频文件";
+
+// Color Options
+"COLOR_OPTIONS" = "界面颜色选项";
+
+"CUSTOM_THEME_TAB" = "自定义主题";
+"CUSTOM_TINT_TAB" = "自定义色调";
+"CUSTOM_SYSTEMBLUE_TAB" = "Custom SystemBlue";
+"CUSTOM_PROGRESS_BAR_TAB" = "自定义进度条";
 
 // Video Options
 "VIDEO_OPTIONS" = "视频播放选项";
@@ -56,6 +75,17 @@
 "VALUE_TEXT" = "值(秒): %.lf";
 "DISABLE_PREMIUM_TEXT" = "启用“我有 YouTube Premium”选项会禁用此功能";
 "ALWAYS_SHOW_BAR_TEXT" = "必须在 YouTube Reborn 设置中启用“禁用相关视频”和“隐藏快速操作”才能使用“始终显示播放栏”";
+
+// Video Player Options
+"VIDEO_PLAYER_OPTIONS" = "播放器的选项";
+
+"HIDE_CONNECT_PLAYER_BUTTON" = "隐藏播放器下方“连接”按钮";
+"HIDE_SHARE_PLAYER_BUTTON" = "隐藏播放器下方“分享”按钮";
+"HIDE_REMIX_PLAYER_BUTTON" = "隐藏播放器下方“混剪”按钮";
+"HIDE_THANKS_PLAYER_BUTTON" = "隐藏播放器下方“感谢”按钮";
+"HIDE_DOWNLOAD_PLAYER_BUTTON" = "隐藏播放器下方“下载”按钮";
+"HIDE_CLIP_PLAYER_BUTTON" = "隐藏播放器下方“剪辑”按钮";
+"HIDE_SAVE_PLAYER_BUTTON" = "隐藏播放器下方“保存”按钮";
 
 // Overlay Options
 "OVERLAY_OPTIONS" = "播放界面选项";
@@ -98,9 +128,6 @@
 "HIDE_SUBSCRIPTIONS_TAB" = "隐藏订阅";
 "HIDE_YOU_TAB" = "隐藏“我”";
 "REORDER_TABS" = "标签重新排序";
-"COLOR_OPTIONS" = "界面颜色选项-主题";
-"COLOR_OPTIONS_2" = "界面颜色选项-文本和图标";
-"COLOR_OPTIONS_3" = "界面颜色选项-自定义进度条";
 
 // Picture In Picture Options
 "PICTURE_IN_PICTURE_OPTIONS" = "画中画的选项";
@@ -145,6 +172,15 @@
 "PREVIEW" = "预览";
 "FILLER" = "话题/笑话";
 "MUSIC_AND_OFFTOPIC" = "无关音乐";
+"WOULD_YOU_LIKE_TO_SKIP" = "你想跳过吗？";
+"SPONSOR_DETECTED" = "检测到推广赞助";
+"SELFPROMO_DETECTED" = "检测到推广推销";
+"INTERACTION_DETECTED" = "检测到推广关注";
+"INTRO_DETECTED" = "检测到推广介绍";
+"OUTRO_DETECTED" = "检测到其他推广";
+"PREVIEW_DETECTED" = "检测到推广预览";
+"FILLER_DETECTED" = "检测到推广话题/笑话";
+"MUSIC_OFFTOPIC_DETECTED" = "检测到推广无关音乐";
 
 // Other Options
 "OTHER_OPTIONS" = "其他功能选项";
@@ -173,6 +209,7 @@
 "HIDE_SHORTS_OVERLAY_OP_BUTTON" = "隐藏短视频左上角“OP”按钮";
 "RESET_COLOR_OPTIONS" = "重置颜色选项";
 "RESET_YOUTUBE_REBORN_OPTIONS" = "重置插件设置";
+"RESET_CACHE" = "清除缓存";
 "RESET_COLOR_TEXT" = "你想重置所有颜色？";
 "RESET_OPTIONS_TEXT" = "你想重置所有设置？";
 
@@ -181,7 +218,7 @@
 "DEVELOPER_TEXT" = "开发者";
 "ICON_DESIGNER_TEXT" = "图标设计";
 "DEV_SUPPORT_TEXT" = "开发支持";
-"FEATURES_DAYANCH96_TEXT" = "功能：“YouTube Reborn v5 菜单”、“红色进度条”、“灰色缓冲区进度”、“导航栏”、“禁用双击跳过”";
+"FEATURES_DAYANCH96_TEXT" = "功能：“YouTube Reborn v5 菜单”、“清除缓存”、“红色进度条”、“灰色缓冲区进度”、“导航栏”、“禁用双击跳过”";
 "FEATURES_POOMSMART_TEXT" = "功能：“视频播放器下的 YouTube Reborn 按钮”、“YouTube-X/Adblock”、“自动全屏播放”";
 "FEATURES_NGUYEASANG_TEXT" = "功能：“视频播放器下的 YouTube Reborn 按钮”";
 "FEATURES_NSNOOLIE_TEXT" = "功能：“额外的视频速度”";

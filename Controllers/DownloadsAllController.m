@@ -1,20 +1,20 @@
-#import "DownloadsVideoController.h"
+#import "DownloadsAllController.h"
 #import "Localization.h"
 #import <Photos/Photos.h>
 
-@interface DownloadsVideoController ()
+@interface DownloadsAllController ()
 {
     NSString *documentsDirectory;
-    NSMutableArray *filePathsVideoArray;
-    NSMutableArray *filePathsVideoArtworkArray;
+    NSMutableArray *filePathsAllArray;
+    NSMutableArray *filePathsAllArtworkArray;
     NSCache *thumbnailCache;
 }
 - (void)coloursView;
-- (void)setupVideoArrays;
+- (void)setupAllArrays;
 - (UIImage *)generateThumbnailForVideoAtURL:(NSURL *)videoURL;
 @end
 
-@implementation DownloadsVideoController
+@implementation DownloadsAllController
 
 - (void)viewDidLoad {
     [super viewDidLoad];
@@ -25,25 +25,23 @@
     self.searchBar.placeholder = LOC(@"SEARCH_TEXT");
 
     UIBarButtonItem *searchButton = [[UIBarButtonItem alloc] initWithCustomView:self.searchBar];
-
-    UIBarButtonItem *filterButton = [[UIBarButtonItem alloc] initWithImage:[UIImage systemImageNamed:@"slider.horizontal.3"] style:UIBarButtonItemStylePlain target:self action:@selector(filterButtonTapped)];
-    self.navigationItem.rightBarButtonItems = @[searchButton, filterButton];
+    self.navigationItem.rightBarButtonItem = searchButton;
     self.filteredItems = [NSArray array];
     self.isSearching = NO;
 
     UITableViewStyle style;
-        if (@available(iOS 13, *)) {
-            style = UITableViewStyleInsetGrouped;
-        } else {
-            style = UITableViewStyleGrouped;
-        }
+    if (@available(iOS 13, *)) {
+        style = UITableViewStyleInsetGrouped;
+    } else {
+        style = UITableViewStyleGrouped;
+    }
 
     self.tableView = [[UITableView alloc] initWithFrame:CGRectZero style:style];
     self.tableView.translatesAutoresizingMaskIntoConstraints = NO;
     self.tableView.dataSource = self;
     self.tableView.delegate = self;
     [self.view addSubview:self.tableView];
-    [self setupVideoArrays];
+    [self setupAllArrays];
 
     thumbnailCache = [[NSCache alloc] init];
 
@@ -59,16 +57,16 @@
     AVAsset *asset = [AVAsset assetWithURL:videoURL];
     AVAssetImageGenerator *generator = [[AVAssetImageGenerator alloc] initWithAsset:asset];
     generator.appliesPreferredTrackTransform = YES;
-    
+
     CMTime time = CMTimeMakeWithSeconds(0.0, 600);
     NSError *error = nil;
     CMTime actualTime;
-    
+
     CGImageRef imageRef = [generator copyCGImageAtTime:time actualTime:&actualTime error:&error];
     UIImage *thumbnail = [[UIImage alloc] initWithCGImage:imageRef];
-    
+
     CGImageRelease(imageRef);
-    
+
     return thumbnail;
 }
 
@@ -145,15 +143,15 @@
             cell.detailTextLabel.textColor = [UIColor whiteColor];
         }
     }
-    cell.textLabel.text = [filePathsVideoArray objectAtIndex:indexPath.row];
+    cell.textLabel.text = [filePathsAllArray objectAtIndex:indexPath.row];
     cell.textLabel.frame = CGRectMake(cell.textLabel.frame.origin.x, 
                                        cell.textLabel.frame.origin.y, 
                                        cell.contentView.frame.size.width - 90, 
                                        cell.textLabel.frame.size.height);
-    
-    NSString *artworkFileName = filePathsVideoArtworkArray[indexPath.row];
+
+    NSString *artworkFileName = filePathsAllArtworkArray[indexPath.row];
     UIImage *thumbnail = [thumbnailCache objectForKey:artworkFileName];
-    
+
     if (thumbnail) {
         cell.imageView.image = thumbnail;
     } else {
@@ -161,7 +159,7 @@
             NSString *filePath = [documentsDirectory stringByAppendingPathComponent:artworkFileName];
             NSURL *fileURL = [NSURL fileURLWithPath:filePath];
             UIImage *thumbnailImage = [self generateThumbnailForVideoAtURL:fileURL];
-            
+
             if (thumbnailImage) {
                 [thumbnailCache setObject:thumbnailImage forKey:artworkFileName];
                 dispatch_async(dispatch_get_main_queue(), ^{
@@ -179,7 +177,7 @@
 - (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath {
     [tableView deselectRowAtIndexPath:indexPath animated:YES];
 
-    NSString *currentFileName = filePathsVideoArray[indexPath.row];
+    NSString *currentFileName = filePathsAllArray[indexPath.row];
     NSString *filePath = [documentsDirectory stringByAppendingPathComponent:currentFileName];
 
     AVAudioSession *audioSession = [AVAudioSession sharedInstance];
@@ -196,8 +194,8 @@
 }
 
 - (void)tableView:(UITableView *)tableView accessoryButtonTappedForRowWithIndexPath:(NSIndexPath *)indexPath {
-    NSString *currentVideoFileName = filePathsVideoArray[indexPath.row];
-    NSString *currentArtworkFileName = filePathsVideoArtworkArray[indexPath.row];
+    NSString *currentVideoFileName = filePathsAllArray[indexPath.row];
+    NSString *currentArtworkFileName = filePathsAllArtworkArray[indexPath.row];
 
     UIAlertController *alertMenu = [UIAlertController alertControllerWithTitle:LOC(@"OPTIONS_TEXT") message:nil preferredStyle:UIAlertControllerStyleAlert];
 
@@ -226,35 +224,6 @@
         }];
     }]];
 
-        [alertMenu addAction:[UIAlertAction actionWithTitle:LOC(@"EDIT_FILE_NAME") style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
-
-            UIAlertController *editAlert = [UIAlertController alertControllerWithTitle:LOC(@"EDIT_FILE_NAME") message:nil preferredStyle:UIAlertControllerStyleAlert];
-            
-            [editAlert addTextFieldWithConfigurationHandler:^(UITextField *textField) {
-                textField.placeholder = currentVideoFileName;
-                textField.text = [currentVideoFileName stringByDeletingPathExtension];
-            }];
-            
-            [editAlert addAction:[UIAlertAction actionWithTitle:LOC(@"SAVE_TEXT") style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
-                UITextField *textField = editAlert.textFields.firstObject;
-                NSString *newFileName = textField.text;
-                
-                NSString *newVideoFileName = [[newFileName stringByAppendingString:@"."] stringByAppendingString:[currentVideoFileName pathExtension]];
-                NSString *newArtworkFileName = [[newFileName stringByAppendingString:@"."] stringByAppendingString:[currentArtworkFileName pathExtension]];
-                
-                [[NSFileManager defaultManager] moveItemAtPath:[documentsDirectory stringByAppendingPathComponent:currentVideoFileName] toPath:[documentsDirectory stringByAppendingPathComponent:newVideoFileName] error:nil];
-                [[NSFileManager defaultManager] moveItemAtPath:[documentsDirectory stringByAppendingPathComponent:currentArtworkFileName] toPath:[documentsDirectory stringByAppendingPathComponent:newArtworkFileName] error:nil];
-                
-                [filePathsVideoArray replaceObjectAtIndex:indexPath.row withObject:newVideoFileName];
-                [filePathsVideoArtworkArray replaceObjectAtIndex:indexPath.row withObject:newArtworkFileName];
-                [self.tableView reloadData];
-            }]];
-            
-            [editAlert addAction:[UIAlertAction actionWithTitle:LOC(@"CANCEL_TEXT") style:UIAlertActionStyleCancel handler:nil]];
-            
-            [self presentViewController:editAlert animated:YES completion:nil];
-        }]];
-
     [alertMenu addAction:[UIAlertAction actionWithTitle:LOC(@"DELETE_VIDEO") style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
         [[NSFileManager defaultManager] removeItemAtPath:[documentsDirectory stringByAppendingPathComponent:currentVideoFileName] error:nil];
         [[NSFileManager defaultManager] removeItemAtPath:[documentsDirectory stringByAppendingPathComponent:currentArtworkFileName] error:nil];
@@ -262,9 +231,9 @@
         UIAlertController *alertDeleted = [UIAlertController alertControllerWithTitle:LOC(@"NOTICE_TEXT") message:LOC(@"VIDEO_DELETED") preferredStyle:UIAlertControllerStyleAlert];
 
         [alertDeleted addAction:[UIAlertAction actionWithTitle:LOC(@"OKAY_TEXT") style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
-            [filePathsVideoArray removeAllObjects];
-            [filePathsVideoArtworkArray removeAllObjects];
-            [self setupVideoArrays];
+            [filePathsAllArray removeAllObjects];
+            [filePathsAllArtworkArray removeAllObjects];
+            [self setupAllArrays];
             [self.tableView reloadData];
         }]];
 
@@ -277,54 +246,23 @@
     [self presentViewController:alertMenu animated:YES completion:nil];
 }
 
-- (void)setupVideoArrays {
+- (void)setupAllArrays {
     NSArray *paths = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES);
     documentsDirectory = [paths objectAtIndex:0];
 
     NSArray *filePathsList = [[NSFileManager defaultManager] subpathsOfDirectoryAtPath:documentsDirectory error:nil];
-    filePathsVideoArray = [[NSMutableArray alloc] init];
-    filePathsVideoArtworkArray = [[NSMutableArray alloc] init];
+    filePathsAllArray = [[NSMutableArray alloc] init];
+    filePathsAllArtworkArray = [[NSMutableArray alloc] init];
     for (id object in filePathsList) {
-        if ([[object pathExtension] isEqualToString:@"mp4"]){
-            [filePathsVideoArray addObject:object];
+        if ([[object pathExtension] isEqualToString:@"mp4"] || [[object pathExtension] isEqualToString:@"mp3"] || [[object pathExtension] isEqualToString:@"m4a"]){
+            [filePathsAllArray addObject:object];
             NSString *cut = [object substringToIndex:[object length]-4];
             NSString *jpg = [NSString stringWithFormat:@"%@.jpg", cut];
-            [filePathsVideoArtworkArray addObject:jpg];
+            [filePathsAllArtworkArray addObject:jpg];
         }
     }
-    self.allItems = [NSArray arrayWithArray:filePathsVideoArray];
+    self.allItems = [NSArray arrayWithArray:filePathsAllArray];
 }
-
-- (void)filterButtonTapped {
-    UIAlertController *filterAlert = [UIAlertController alertControllerWithTitle:LOC(@"Filter Videos") message:LOC(@"Enter the maximum duration in seconds:") preferredStyle:UIAlertControllerStyleAlert];
-    [filterAlert addTextFieldWithConfigurationHandler:^(UITextField * _Nonnull textField) {
-        textField.placeholder = LOC(@"Enter seconds");
-        textField.keyboardType = UIKeyboardTypeNumberPad;
-    }];
-    UIAlertAction *applyFilter = [UIAlertAction actionWithTitle:LOC(@"APPLY_TEXT") style:UIAlertActionStyleDefault handler:^(UIAlertAction * _Nonnull action) {
-        UITextField *textField = filterAlert.textFields.firstObject;
-        NSString *inputSeconds = textField.text;
-        
-        double maxDuration = [inputSeconds intValue];
-        NSPredicate *predicate = [NSPredicate predicateWithBlock:^BOOL(id evaluatedObject, NSDictionary *bindings) {
-            NSString *videoFileName = (NSString *)evaluatedObject;
-            NSString *filePath = [documentsDirectory stringByAppendingPathComponent:videoFileName];
-            AVAsset *asset = [AVAsset assetWithURL:[NSURL fileURLWithPath:filePath]];
-            CMTime duration = asset.duration;
-            double durationSeconds = CMTimeGetSeconds(duration);
-            return durationSeconds <= maxDuration;
-        }];
-        
-        self.filteredItems = [self.allItems filteredArrayUsingPredicate:predicate];
-        self.isSearching = YES;
-        [self.tableView reloadData];
-    }];
-    UIAlertAction *cancelAction = [UIAlertAction actionWithTitle:LOC(@"CANCEL_TEXT") style:UIAlertActionStyleCancel handler:nil];
-    [filterAlert addAction:applyFilter];
-    [filterAlert addAction:cancelAction];
-    [self presentViewController:filterAlert animated:YES completion:nil];
-}
-
 
 - (void)coloursView {
     if (self.traitCollection.userInterfaceStyle == UIUserInterfaceStyleLight) {

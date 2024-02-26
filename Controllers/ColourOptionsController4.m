@@ -1,17 +1,17 @@
-#import "ColourOptionsController3.h"
+#import "ColourOptionsController4.h"
 #import "Localization.h"
 
-@interface ColourOptionsController3 ()
+@interface ColourOptionsController4 ()
 - (void)coloursView;
 @end
 
-@implementation ColourOptionsController3
+@implementation ColourOptionsController4
 
 - (void)loadView {
 	[super loadView];
     [self coloursView];
 
-    self.title = LOC(@"COLOR_OPTIONS_3");
+    self.title = LOC(@"COLOR_OPTIONS_4");
     
     UIBarButtonItem *doneButton = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemDone target:self action:@selector(done)];
     self.navigationItem.leftBarButtonItem = doneButton;
@@ -20,10 +20,10 @@
     self.navigationItem.rightBarButtonItem = saveButton;
 
     self.supportsAlpha = NO;
-    NSData *systemBlueColorData = [[NSUserDefaults standardUserDefaults] objectForKey:@"kCustomSystemBlueColor"];
-    NSKeyedUnarchiver *systemBlueUnarchiver = [[NSKeyedUnarchiver alloc] initForReadingFromData:systemBlueColorData error:nil];
-    [systemBlueUnarchiver setRequiresSecureCoding:NO];
-    UIColor *color = [systemBlueUnarchiver decodeObjectForKey:NSKeyedArchiveRootObjectKey];
+    NSData *progressbarColorData = [[NSUserDefaults standardUserDefaults] objectForKey:@"kYTProgreessBarColourOption"];
+    NSKeyedUnarchiver *progressbarUnarchiver = [[NSKeyedUnarchiver alloc] initForReadingFromData:progressbarColorData error:nil];
+    [progressbarUnarchiver setRequiresSecureCoding:NO];
+    UIColor *color = [progressbarUnarchiver decodeObjectForKey:NSKeyedArchiveRootObjectKey];
     self.selectedColor = color;
 }
 
@@ -47,15 +47,15 @@
 
 @end
 
-@implementation ColourOptionsController3(Privates)
+@implementation ColourOptionsController4(Privates)
 
 - (void)done {
     [self.presentingViewController dismissViewControllerAnimated:YES completion:nil];
 }
 
 - (void)save {
-    NSData *systemBlueColorData = [NSKeyedArchiver archivedDataWithRootObject:self.selectedColor requiringSecureCoding:nil error:nil];
-    [[NSUserDefaults standardUserDefaults] setObject:systemBlueColorData forKey:@"kCustomSystemBlueColor"];
+    NSData *progressbarColorData = [NSKeyedArchiver archivedDataWithRootObject:self.selectedColor requiringSecureCoding:nil error:nil];
+    [[NSUserDefaults standardUserDefaults] setObject:progressbarColorData forKey:@"kYTProgreessBarColourOption"];
     [[NSUserDefaults standardUserDefaults] synchronize];
 
     UIAlertController *alertSaved = [UIAlertController alertControllerWithTitle:LOC(@"COLOR_SAVED") message:nil preferredStyle:UIAlertControllerStyleAlert];

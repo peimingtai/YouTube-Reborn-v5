@@ -25,7 +25,7 @@ static BOOL hasDeviceNotch() {
     self.title = LOC(@"OVERLAY_OPTIONS");
 
     UIBarButtonItem *doneButton = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemDone target:self action:@selector(done)];
-    self.navigationItem.rightBarButtonItem = doneButton;
+    self.navigationItem.leftBarButtonItem = doneButton;
 
     UITableViewStyle style;
         if (@available(iOS 13, *)) {
@@ -119,7 +119,7 @@ static BOOL hasDeviceNotch() {
             cell.accessoryView = hideNextButtonInOverlay;
         }
         if (indexPath.row == 5) {
-            cell.textLabel.text = LOC(@"HIDE_PREVIOUS_BUTTON_SHADOW");
+            cell.textLabel.text = LOC(@"HIDE_NEXT_BUTTON_SHADOW");
             UISwitch *hideNextButtonShadowInOverlay = [[UISwitch alloc] initWithFrame:CGRectZero];
             [hideNextButtonShadowInOverlay addTarget:self action:@selector(toggleHideNextButtonShadowInOverlay:) forControlEvents:UIControlEventValueChanged];
             hideNextButtonShadowInOverlay.on = [[NSUserDefaults standardUserDefaults] boolForKey:@"kHideNextButtonShadowInOverlay"];

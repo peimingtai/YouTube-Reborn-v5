@@ -14,7 +14,7 @@
     self.title = LOC(@"VIDEO_OPTIONS");
 
     UIBarButtonItem *doneButton = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemDone target:self action:@selector(done)];
-    self.navigationItem.rightBarButtonItem = doneButton;
+    self.navigationItem.leftBarButtonItem = doneButton;
 
     UITableViewStyle style;
         if (@available(iOS 13, *)) {
@@ -43,9 +43,9 @@
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section {
     if ([[NSUserDefaults standardUserDefaults] boolForKey:@"kEnableCustomDoubleTapToSkipDuration"] == YES) {
-        return 16;
+        return 17;
     }
-    return 17;
+    return 16;
 }
 
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath {
@@ -221,7 +221,7 @@
 
         [self presentViewController:alertError animated:YES completion:nil];
     }
-    if (indexPath.row == 10) {
+    if (indexPath.row == 12) {
         UIAlertController *alertError = [UIAlertController alertControllerWithTitle:LOC(@"NOTICE_TEXT") message:LOC(@"ALWAYS_SHOW_BAR_TEXT") preferredStyle:UIAlertControllerStyleAlert];
 
         [alertError addAction:[UIAlertAction actionWithTitle:LOC(@"OKAY_TEXT") style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {

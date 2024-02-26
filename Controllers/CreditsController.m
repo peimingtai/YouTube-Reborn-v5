@@ -14,7 +14,7 @@
     self.title = LOC(@"CREDITS_BUTTON");
 
     UIBarButtonItem *doneButton = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemDone target:self action:@selector(done)];
-    self.navigationItem.rightBarButtonItem = doneButton;
+    self.navigationItem.leftBarButtonItem = doneButton;
 
     UITableViewStyle style = UITableViewStyleGrouped;
     if (@available(iOS 13, *)) {
@@ -45,7 +45,7 @@
     if (section == 0) {
         return 1;
     } else if (section == 1) {
-        return 6;
+        return 7;
     }
     return 0;
 }
@@ -58,15 +58,25 @@
         cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleSubtitle reuseIdentifier:CellIdentifier];
     }
 
-    cell.textLabel.adjustsFontSizeToFitWidth = YES;
-    cell.detailTextLabel.adjustsFontSizeToFitWidth = YES;
+    cell.textLabel.numberOfLines = 1;
+    cell.textLabel.lineBreakMode = NSLineBreakByClipping;
+    cell.textLabel.frame = CGRectMake(cell.textLabel.frame.origin.x, 
+                                       cell.textLabel.frame.origin.y, 
+                                       cell.contentView.frame.size.width - 90, 
+                                       cell.textLabel.frame.size.height);
+    cell.detailTextLabel.numberOfLines = 1;
+    cell.detailTextLabel.lineBreakMode = NSLineBreakByClipping;
+    cell.detailTextLabel.frame = CGRectMake(cell.textLabel.frame.origin.x, 
+                                       cell.textLabel.frame.origin.y, 
+                                       cell.contentView.frame.size.width - 90, 
+                                       cell.textLabel.frame.size.height);
     cell.accessoryType = UITableViewCellAccessoryDisclosureIndicator;
 
     if (indexPath.section == 0) {
         if (indexPath.row == 0) {
             cell.textLabel.text = @"Lillie";
             cell.detailTextLabel.text = LOC(@"DEVELOPER_TEXT");
-            [self loadImageWithURLString:@"https://avatars.githubusercontent.com/u/91358136?v=4" forImageView:cell.imageView];
+            [self loadImageWithURLString:@"" forImageView:cell.imageView];
         }
     } else if (indexPath.section == 1) {
         if (indexPath.row == 0) {
@@ -76,22 +86,26 @@
         } else if (indexPath.row == 1) {
             cell.textLabel.text = @"kirb";
             cell.detailTextLabel.text = LOC(@"DEV_SUPPORT_TEXT");
-            [self loadImageWithURLString:@"https://avatars.githubusercontent.com/u/773309?v=4" forImageView:cell.imageView];
+            [self loadImageWithURLString:@"" forImageView:cell.imageView];
         } else if (indexPath.row == 2) {
             cell.textLabel.text = @"Dayanch96";
             cell.detailTextLabel.text = LOC(@"FEATURES_DAYANCH96_TEXT");
-            [self loadImageWithURLString:@"https://avatars.githubusercontent.com/u/38832025?v=4" forImageView:cell.imageView];
+            [self loadImageWithURLString:@"" forImageView:cell.imageView];
         } else if (indexPath.row == 3) {
             cell.textLabel.text = @"PoomSmart";
             cell.detailTextLabel.text = LOC(@"FEATURES_POOMSMART_TEXT");
-            [self loadImageWithURLString:@"https://avatars.githubusercontent.com/u/3608783?v=4" forImageView:cell.imageView];
+            [self loadImageWithURLString:@"" forImageView:cell.imageView];
         } else if (indexPath.row == 4) {
             cell.textLabel.text = @"NguyenASang";
             cell.detailTextLabel.text = LOC(@"FEATURES_NGUYEASANG_TEXT");
-            [self loadImageWithURLString:@"https://avatars.githubusercontent.com/u/87893636?v=4" forImageView:cell.imageView];
+            [self loadImageWithURLString:@"" forImageView:cell.imageView];
         } else if (indexPath.row == 5) {
             cell.textLabel.text = @"Snoolie";
             cell.detailTextLabel.text = LOC(@"FEATURES_NSNOOLIE_TEXT");
+            [self loadImageWithURLString:@"" forImageView:cell.imageView];
+        } else if (indexPath.row == 6) {
+            cell.textLabel.text = @"xiangfeidexiaohuo";
+            cell.detailTextLabel.text = LOC(@"🇨🇳简体中文@秋名山巨魔俱乐部");
             [self loadImageWithURLString:@"" forImageView:cell.imageView];
         }
     }
@@ -120,7 +134,9 @@
         } else if (indexPath.row == 4) {
             [self openURLWithString:@"https://github.com/NguyenASang"];
         } else if (indexPath.row == 5) {
-            [self openURLWithString:@"https://github.com/0xilis"];            
+            [self openURLWithString:@"https://github.com/0xilis"];
+        } else if (indexPath.row == 6) {
+            [self openURLWithString:@"https://xiangfeidexiaohuo.github.io"];
         }
     }
 }

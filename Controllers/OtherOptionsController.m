@@ -6,7 +6,6 @@
 @end
 
 @implementation OtherOptionsController
-@synthesize versionTextField;
 
 - (void)viewDidLoad {
     [super viewDidLoad];
@@ -15,7 +14,7 @@
     self.title = LOC(@"OTHER_OPTIONS");
 
     UIBarButtonItem *doneButton = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemDone target:self action:@selector(done)];
-    self.navigationItem.rightBarButtonItem = doneButton;
+    self.navigationItem.leftBarButtonItem = doneButton;
 
     UITableViewStyle style;
         if (@available(iOS 13, *)) {
@@ -43,7 +42,7 @@
 }
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section {
-    return 13;
+    return 14;
 }
 
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath {
@@ -67,6 +66,7 @@
             cell.detailTextLabel.textColor = [UIColor whiteColor];
         }
         cell.selectionStyle = UITableViewCellSelectionStyleNone;
+        UISwitch *appVersionSpoofer; // App Version Spoofer Declaration
         if (indexPath.row == 0) {
             cell.textLabel.text = LOC(@"IPAD_LAYOUT");
             UISwitch *enableiPadStyleOniPhone = [[UISwitch alloc] initWithFrame:CGRectZero];
@@ -151,19 +151,25 @@
             autoHideHomeBar.on = [[NSUserDefaults standardUserDefaults] boolForKey:@"kAutoHideHomeBar"];
             cell.accessoryView = autoHideHomeBar;
         }
-        if (indexPath.row == 12) {
-            cell.textLabel.text = LOC(@"APP_VERSION_SPOOFER");
-            UISwitch *appVersionSpoofer = [[UISwitch alloc] initWithFrame:CGRectZero];
-            [appVersionSpoofer addTarget:self action:@selector(toggleAppVersionSpoofer:) forControlEvents:UIControlEventValueChanged];
-            appVersionSpoofer.on = [[NSUserDefaults standardUserDefaults] boolForKey:@"kAppVersionSpoofer"];
-            cell.accessoryView = appVersionSpoofer;
-	    
-            self.versionTextField = [[UITextField alloc] initWithFrame:CGRectZero];
-            self.versionTextField.placeholder = LOC(@"ENTER_CUSTOM_APP_VERSION");
-            self.versionTextField.enabled = appVersionSpoofer.isOn;
-            [self.versionTextField addTarget:self action:@selector(versionTextFieldChanged:) forControlEvents:UIControlEventEditingChanged];
-            cell.accessoryType = UITableViewCellAccessoryNone;
-            cell.accessoryView = self.versionTextField;
+    if (indexPath.row == 12) {
+        cell.textLabel.text = LOC(@"APP_VERSION_SPOOFER");
+        UISwitch *appVersionSpoofer = [[UISwitch alloc] initWithFrame:CGRectZero];
+        [appVersionSpoofer addTarget:self action:@selector(toggleAppVersionSpoofer:) forControlEvents:UIControlEventValueChanged];
+        appVersionSpoofer.on = [[NSUserDefaults standardUserDefaults] boolForKey:@"kAppVersionSpoofer"];
+        cell.accessoryView = appVersionSpoofer;
+	}
+    if (indexPath.row == 13) {
+        UITextField *versionTextField = [cell.contentView viewWithTag:123];
+        if (!versionTextField) {
+            versionTextField = [[UITextField alloc] initWithFrame:CGRectMake(cell.bounds.origin.x + cell.textLabel.frame.size.width + 20, 10, cell.bounds.size.width - cell.textLabel.frame.size.width - 30, cell.bounds.size.height - 20)];
+            versionTextField.placeholder = LOC(@"ENTER_CUSTOM_APP_VERSION");
+            versionTextField.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
+            versionTextField.enabled = appVersionSpoofer.isOn;
+            [versionTextField addTarget:self action:@selector(versionTextFieldChanged:) forControlEvents:UIControlEventEditingChanged];
+            versionTextField.tag = 123;
+            [cell.contentView addSubview:versionTextField];
+            self.versionTextField = versionTextField;
+	    }
 	}
     }
     return cell;
@@ -188,25 +194,21 @@
     [self.tableView reloadData];
 }
 
-- (void)viewWillAppear:(BOOL)animated {
-    [super viewWillAppear:animated];
-}
-
 - (void)versionTextFieldChanged:(UITextField *)textField {
     NSString *customVersion = textField.text;
-    
-    NSString *validVersionFormat = @"(17|18|19)(\\.\\d{1,2}){2}";
-    NSPredicate *validVersionPredicate = [NSPredicate predicateWithFormat:@"SELF MATCHES %@", validVersionFormat];
-
     NSCharacterSet *allowedCharacterSet = [NSCharacterSet characterSetWithCharactersInString:@"0123456789."];
     NSCharacterSet *inputCharacterSet = [NSCharacterSet characterSetWithCharactersInString:customVersion];
-
-   if (![validVersionPredicate evaluateWithObject:customVersion] || ![allowedCharacterSet isSupersetOfSet:inputCharacterSet]) {
-        // Invalid format, set the default value or display an error message
-        textField.text = @"19.03.1";
+    if (![allowedCharacterSet isSupersetOfSet:inputCharacterSet] || customVersion.length < 7) {
+        textField.text = @"";
         return;
-    } 
-    self.customAppVersion = customVersion;
+    }
+    if (customVersion.length >= 6) {
+        NSMutableString *mutableCustomVersion = [customVersion mutableCopy];
+        [mutableCustomVersion replaceCharactersInRange:NSMakeRange(2, 1) withString:@"."];
+        [mutableCustomVersion replaceCharactersInRange:NSMakeRange(5, 1) withString:@"."];
+        textField.text = mutableCustomVersion;
+    }
+    self.customAppVersion = textField.text;
 }
 
 @end
@@ -345,5 +347,6 @@
         [[NSUserDefaults standardUserDefaults] setBool:NO forKey:@"kAppVersionSpoofer"];
         [[NSUserDefaults standardUserDefaults] synchronize];
     }
+    self.versionTextField.enabled = sender.isOn;
 }
 @end

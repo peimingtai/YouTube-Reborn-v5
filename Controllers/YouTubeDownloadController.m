@@ -1,13 +1,6 @@
 #import "YouTubeDownloadController.h"
 #import "Localization.h"
-#import "../MobileFFmpeg/MobileFFmpegConfig.h"
 #import "../MobileFFmpeg/MobileFFmpeg.h"
-#import "../MobileFFmpeg/libavcodec/avcodec.h"
-#import "../MobileFFmpeg/libavdevice/avdevice.h"
-#import "../MobileFFmpeg/libavfilter/avfilter.h"
-#import "../MobileFFmpeg/libavutil/avutil.h"
-#import "../MobileFFmpeg/libswresample/swresample.h"
-#import "../MobileFFmpeg/libswscale/swscale.h"
 #import "../AFNetworking/AFNetworking.h"
 
 @interface YouTubeDownloadController () {
@@ -37,7 +30,7 @@
     UIImage *artwork = [UIImage imageWithData:[NSData dataWithContentsOfURL:self.artworkURL]];
     artworkImage.image = artwork;
 
-    if ([[self.artworkURL pathExtension] isEqualToString:@"jpg"]) {
+    if ([[self.artworkURL pathExtension] isEqualToString:@"png"]) {
         [self.view addSubview:artworkImage];
     }
 

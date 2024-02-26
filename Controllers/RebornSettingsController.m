@@ -14,7 +14,7 @@
     self.title = LOC(@"REBORN_SETTINGS");
 
     UIBarButtonItem *doneButton = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemDone target:self action:@selector(done)];
-    self.navigationItem.rightBarButtonItem = doneButton;
+    self.navigationItem.leftBarButtonItem = doneButton;
 
     UITableViewStyle style;
         if (@available(iOS 13, *)) {
@@ -38,7 +38,7 @@
 }
 
 - (NSInteger)numberOfSectionsInTableView:(UITableView *)tableView {
-    return 3;
+    return 4;
 }
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section {
@@ -49,6 +49,9 @@
         return 3;
     }
     if (section == 2) {
+        return 1;
+    }
+    if (section == 3) {
         return 2;
     }
     return 0;
@@ -110,6 +113,18 @@
         }
         if (indexPath.section == 2) {
             if (indexPath.row == 0) {
+                cell.textLabel.text = LOC(@"RESET_CACHE");
+                UILabel *cache = [[UILabel alloc] init];
+                cache.text = [self getCacheSize];
+                cache.textColor = [UIColor secondaryLabelColor];
+                cache.font = [UIFont systemFontOfSize:16];
+                cache.textAlignment = NSTextAlignmentRight;
+                [cache sizeToFit];
+                cell.accessoryView = cache;
+            }
+        }
+        if (indexPath.section == 3) {
+            if (indexPath.row == 0) {
                 cell.textLabel.text = LOC(@"RESET_COLOR_OPTIONS");
                 cell.accessoryType = UITableViewCellAccessoryDisclosureIndicator;
             }
@@ -122,9 +137,43 @@
     return cell;
 }
 
+- (NSString *)getCacheSize {
+    NSString *cachePath = NSSearchPathForDirectoriesInDomains(NSCachesDirectory, NSUserDomainMask, YES).firstObject;
+    NSArray *filesArray = [[NSFileManager defaultManager] subpathsOfDirectoryAtPath:cachePath error:nil];
+
+    unsigned long long int folderSize = 0;
+    for (NSString *fileName in filesArray) {
+        NSString *filePath = [cachePath stringByAppendingPathComponent:fileName];
+        NSDictionary *fileAttributes = [[NSFileManager defaultManager] attributesOfItemAtPath:filePath error:nil];
+        folderSize += [fileAttributes fileSize];
+    }
+
+    NSByteCountFormatter *formatter = [[NSByteCountFormatter alloc] init];
+    formatter.countStyle = NSByteCountFormatterCountStyleFile;
+
+    return [formatter stringFromByteCount:folderSize];
+}
+
 - (void)tableView:(UITableView *)theTableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath {
     [theTableView deselectRowAtIndexPath:indexPath animated:YES];
-    if (indexPath.section == 2) {
+    if (indexPath.section == 2 && indexPath.row == 0) {
+        UIActivityIndicatorView *activityIndicator = [[UIActivityIndicatorView alloc] initWithActivityIndicatorStyle:UIActivityIndicatorViewStyleMedium];
+        activityIndicator.color = [UIColor labelColor];
+        [activityIndicator startAnimating];
+        UITableViewCell *cell = [theTableView cellForRowAtIndexPath:indexPath];
+        cell.accessoryView = activityIndicator;
+
+        dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+            NSString *cachePath = NSSearchPathForDirectoriesInDomains(NSCachesDirectory, NSUserDomainMask, YES).firstObject;
+            [[NSFileManager defaultManager] removeItemAtPath:cachePath error:nil];
+
+            dispatch_async(dispatch_get_main_queue(), ^{
+                [self.tableView reloadRowsAtIndexPaths:@[[NSIndexPath indexPathForRow:0 inSection:2]] withRowAnimation:UITableViewRowAnimationNone];
+            });
+        });
+    }
+
+    if (indexPath.section == 3) {
         if (indexPath.row == 0) {
             UIAlertController *alert = [UIAlertController alertControllerWithTitle:LOC(@"NOTICE_TEXT") message:LOC(@"RESET_COLOR_TEXT") preferredStyle:UIAlertControllerStyleAlert];
 
@@ -134,10 +183,11 @@
             [alert addAction:[UIAlertAction actionWithTitle:LOC(@"OKAY_TEXT") style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
                 [[NSUserDefaults standardUserDefaults] removeObjectForKey:@"kYTRebornColourOptionsVFour"];
 	        [[NSUserDefaults standardUserDefaults] removeObjectForKey:@"kYTLcmColourOptionVFive"];
+	        [[NSUserDefaults standardUserDefaults] removeObjectForKey:@"kCustomSystemBlueColor"];
 	        [[NSUserDefaults standardUserDefaults] removeObjectForKey:@"kYTProgreessBarColourOption"];
                 [[NSUserDefaults standardUserDefaults] synchronize];
                 [[UIApplication sharedApplication] performSelector:@selector(suspend)];
-                [NSThread sleepForTimeInterval:0.5];
+                [NSThread sleepForTimeInterval:1.0];
                 exit(0);
             }]];
 
@@ -169,7 +219,13 @@
                 [[NSUserDefaults standardUserDefaults] removeObjectForKey:@"kHideUploadTab"];
                 [[NSUserDefaults standardUserDefaults] removeObjectForKey:@"kHideSubscriptionsTab"];
 		[[NSUserDefaults standardUserDefaults] removeObjectForKey:@"kHideYouTab"];
-                [[NSUserDefaults standardUserDefaults] removeObjectForKey:@"kHideLibraryTab"]; // Deprecated Option
+		[[NSUserDefaults standardUserDefaults] removeObjectForKey:@"kHideConnectButton"];
+  		[[NSUserDefaults standardUserDefaults] removeObjectForKey:@"kHideShareButton"];
+    		[[NSUserDefaults standardUserDefaults] removeObjectForKey:@"kHideRemixButton"];
+      		[[NSUserDefaults standardUserDefaults] removeObjectForKey:@"kHideThanksButton"];
+		[[NSUserDefaults standardUserDefaults] removeObjectForKey:@"kHideAddToOfflineButton"];
+  		[[NSUserDefaults standardUserDefaults] removeObjectForKey:@"kHideClipButton"];
+      		[[NSUserDefaults standardUserDefaults] removeObjectForKey:@"kHideSaveToPlaylistButton"];
                 [[NSUserDefaults standardUserDefaults] removeObjectForKey:@"kDisableDoubleTapToSkip"];
 		[[NSUserDefaults standardUserDefaults] removeObjectForKey:@"kHideOverlayDarkBackground"];
                 [[NSUserDefaults standardUserDefaults] removeObjectForKey:@"kHidePreviousButtonInOverlay"];
@@ -234,7 +290,7 @@
                 [[NSUserDefaults standardUserDefaults] removeObjectForKey:@"kHideDuration"];
                 [[NSUserDefaults standardUserDefaults] synchronize];
                 [[UIApplication sharedApplication] performSelector:@selector(suspend)];
-                [NSThread sleepForTimeInterval:0.5];
+                [NSThread sleepForTimeInterval:2.0];
                 exit(0);
             }]];
 

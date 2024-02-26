@@ -9,6 +9,7 @@
 #import "Controllers/RootOptionsController.h"
 #import "Controllers/PictureInPictureController.h"
 #import "Controllers/YouTubeDownloadController.h"
+#import "Controllers/ReorderPivotBarController.h"
 // YT Headers
 #import "YouTubeHeader/ASCollectionView.h"
 #import "YouTubeHeader/ELMCellNode.h"
@@ -18,10 +19,13 @@
 #import "YouTubeHeader/YTColor.h"
 #import "YouTubeHeader/YTColorPalette.h"
 #import "YouTubeHeader/YTCommonColorPalette.h"
+#import "YouTubeHeader/YTPageStyleController.h"
 #import "YouTubeHeader/YTHotConfig.h"
 #import "YouTubeHeader/YTVideoQualitySwitchOriginalController.h"
 #import "YouTubeHeader/YTVideoWithContextNode.h"
 #import "YouTubeHeader/YTIElementRenderer.h"
+#import "YouTubeHeader/YTISectionListRenderer.h"
+#import "YouTubeHeader/YTWatchNextResultsViewController.h"
 #import "YouTubeHeader/YTIMenuConditionalServiceItemRenderer.h"
 #import "YouTubeHeader/YTPlaybackStrippedWatchController.h"
 #import "YouTubeHeader/YTSlimVideoDetailsActionView.h"
@@ -101,7 +105,7 @@
 @property(readonly, nonatomic) UIImageView *imageView;
 @end
 
-@interface YTPlayerView : UIView
+@interface YTPlayerView (Reborn)
 - (void)downloadVideo;
 @end
 
@@ -121,10 +125,6 @@
 
 @interface YTWatchController : NSObject
 - (void)showFullScreen;
-@end
-
-@interface YTPageStyleController
-+ (NSInteger)pageStyle;
 @end
 
 @interface YTSingleVideoTime : NSObject
@@ -159,35 +159,6 @@
 
 @interface YTPivotBarItemView : UIView
 @property(readonly, nonatomic) YTQTMButton *navigationButton;
-@end
-
-@interface YTIPivotBarItemRenderer : NSObject
-- (NSString *)pivotIdentifier;
-- (void)setTabOrder:(NSArray *)orderedTabs;
-- (void)reorderTabs;
-- (UIView *)findTabViewWithAccessibilityIdentifier:(NSString *)accessibilityIdentifier;
-@property (nonatomic, strong) UITableView *tableView;
-@property(retain, nonatomic) YTIIcon *icon;
-@property(retain, nonatomic) YTICommand *navigationEndpoint;
-@property(copy, nonatomic) NSString *pivotIdentifier;
-@property(retain, nonatomic) YTIFormattedString *title;
-@property(copy, nonatomic) NSData *trackingParams;
-@end
-
-@interface YTIPivotBarIconOnlyItemRenderer : GPBMessage
-- (NSString *)pivotIdentifier;
-- (UIView *)findTabViewWithAccessibilityIdentifier:(NSString *)accessibilityIdentifier;
-@end
-
-@interface YTIPivotBarSupportedRenderers : NSObject
-- (YTIPivotBarItemRenderer *)pivotBarItemRenderer;
-- (YTIPivotBarIconOnlyItemRenderer *)pivotBarIconOnlyItemRenderer;
-@property(retain, nonatomic) YTIPivotBarItemRenderer *pivotBarItemRenderer;
-@end
-
-@interface YTIPivotBarRenderer : NSObject
-- (NSMutableArray <YTIPivotBarSupportedRenderers *> *)itemsArray;
-@property (nonatomic, strong) UITableView *tableView;
 @end
 
 @interface YTReelHeaderView : UIView

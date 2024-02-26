@@ -1,8 +1,12 @@
 // Actions/Prompts
+"SEARCH_TEXT" = "Search";
 "CANCEL_TEXT" = "キャンセル";
 "RESET_TEXT" = "リセット";
 "SAVE_TEXT" = "保存";
 "OKAY_TEXT" = "OK";
+"YES_TEXT" = "はい";
+"NO_TEXT" = "いいえ";
+"MORE_TEXT" = "More";
 "NOTICE_TEXT" = "通知";
 "COLOR_SAVED" = "保存しました";
 "IMPORT_VIDEO" = "動画をカメラロールに保存";
@@ -12,6 +16,7 @@
 "APPLY_TEXT" = "適用";
 
 // Downloads
+"ALL_TAB" = "全て";
 "VIDEO_TAB" = "動画";
 "AUDIO_TAB" = "音声";
 "DOWNLOAD_NOTICE" = "アプリを終了しないでください\n完了時に自動で閉じます";
@@ -26,12 +31,26 @@
 "PROGRESS_TEXT" = "進行状況: %.02f%%";
 "DOWNLOAD_AUDIO" = "音声をダウンロード";
 "DOWNLOAD_VIDEO" = "動画をダウンロード";
+"EDIT_FILE_NAME" = "Edit File Name";
+"IMPORT_TO_DOWNLOADS" = "Import to Downloads";
+"IMPORT_ERROR" = "File failed to Import!";
+"FILE_ALREADY_IMPORTED" = "❔The file has already been imported to the Downloads folder.";
+"SUCCESSFULLY_IMPORTED_FILE" = "File Successfully Imported!";
+"FILE_IMPORTED" = "✅ The file has successfully been imported to the Downloads folder.";
 "PLAY_APP_TEXT" = "外部アプリで再生";
 "CHOOSE_TEXT" = "アプリを選択";
 "INFUSE_TEXT" = "Infuseで再生";
 "VLC_TEXT" = "VLCで再生";
 "DOWNLOAD_NOTICE_TEXT" = "続ける前に動画を一時停止してください";
 "DOWNLOAD_FILES_TEXT" = "音声/動画ファイルをダウンロード";
+
+// Color Options
+"COLOR_OPTIONS" = "カラーオプション";
+
+"CUSTOM_THEME_TAB" = "Custom Theme";
+"CUSTOM_TINT_TAB" = "Custom Tint";
+"CUSTOM_SYSTEMBLUE_TAB" = "Custom SystemBlue";
+"CUSTOM_PROGRESS_BAR_TAB" = "Custom Progress Bar";
 
 // Video Options
 "VIDEO_OPTIONS" = "動画の設定";
@@ -56,6 +75,17 @@
 "VALUE_TEXT" = "値 (秒): %.lf";
 "DISABLE_PREMIUM_TEXT" = "「私はYouTubeプレミアムを利用中です」オプションが有効なためこの機能は無効化されます";
 "ALWAYS_SHOW_BAR_TEXT" = "「関連動画を非表示」と「クイックアクションを非表示」を有効にする必要があります";
+
+// Video Player Options
+"VIDEO_PLAYER_OPTIONS" = "Video Player Options";
+
+"HIDE_CONNECT_PLAYER_BUTTON" = "Hide 'Connect' Button under Video Player";
+"HIDE_SHARE_PLAYER_BUTTON" = "Hide 'Share' Button under Video Player";
+"HIDE_REMIX_PLAYER_BUTTON" = "Hide 'Remix' Button under Video Player";
+"HIDE_THANKS_PLAYER_BUTTON" = "Hide 'Thanks' Button under Video Player";
+"HIDE_DOWNLOAD_PLAYER_BUTTON" = "Hide 'Download' Button under Video Player";
+"HIDE_CLIP_PLAYER_BUTTON" = "Hide 'Clip' Button under Video Player";
+"HIDE_SAVE_PLAYER_BUTTON" = "Hide 'Save' Button under Video Player";
 
 // Overlay Options
 "OVERLAY_OPTIONS" = "オーバーレイの設定";
@@ -98,9 +128,6 @@
 "HIDE_SUBSCRIPTIONS_TAB" = "登録チャンネルタブを非表示";
 "HIDE_YOU_TAB" = "マイページタブを非表示";
 "REORDER_TABS" = "タブの並べ替え";
-"COLOR_OPTIONS" = "カラーオプション - テーマ";
-"COLOR_OPTIONS_2" = "カラーオプション - テキストとアイコン";
-"COLOR_OPTIONS_3" = "カラーオプション - プログレスバー";
 
 // Picture In Picture Options
 "PICTURE_IN_PICTURE_OPTIONS" = "ピクチャインピクチャの設定";
@@ -145,6 +172,15 @@
 "PREVIEW" = "プレビュー";
 "FILLER" = "繋ぎの話/冗談";
 "MUSIC_AND_OFFTOPIC" = "音楽/音楽ではない区間";
+"WOULD_YOU_LIKE_TO_SKIP" = "Would you like to skip?";
+"SPONSOR_DETECTED" = "Sponsor Detected";
+"SELFPROMO_DETECTED" = "Selfpromo Detected";
+"INTERACTION_DETECTED" = "Interaction Detected";
+"INTRO_DETECTED" = "Intro Detected";
+"OUTRO_DETECTED" = "Outro Detected";
+"PREVIEW_DETECTED" = "Preview Detected";
+"FILLER_DETECTED" = "Filler Detected";
+"MUSIC_OFFTOPIC_DETECTED" = "Music or offtopic Detected";
 
 // Other Options
 "OTHER_OPTIONS" = "その他の設定";
@@ -168,11 +204,12 @@
 "REBORN_SETTINGS" = "Rebornの設定";
 
 "I_HAVE_YOUTUBE_PREMIUM" = "私はYouTubeプレミアムを利用中です";
-"HIDE_PLAYER_OVERLAY_OP_BUTTON" = "プレイヤーオーバーレイのOPボタンを非表示";
+"HIDE_PLAYER_OVERLAY_OP_BUTTON" = "Hide 'OP' Button under Video Player";
 "HIDE_VIDEO_OVERLAY_OP_BUTTON" = "動画オーバーレイのOPボタンを非表示";
 "HIDE_SHORTS_OVERLAY_OP_BUTTON" = "ショート動画オーバーレイのOPボタンを非表示";
 "RESET_COLOR_OPTIONS" = "カラーオプションをリセット";
 "RESET_YOUTUBE_REBORN_OPTIONS" = "すべての設定をリセット";
+"RESET_CACHE" = "Clear Cache";
 "RESET_COLOR_TEXT" = "カラーオプションを全てリセットしてもよろしいですか?";
 "RESET_OPTIONS_TEXT" = "設定を全てリセットしてもよろしいですか?";
 
@@ -181,7 +218,7 @@
 "DEVELOPER_TEXT" = "開発者";
 "ICON_DESIGNER_TEXT" = "アイコンデザイナー";
 "DEV_SUPPORT_TEXT" = "開発者サポート";
-"FEATURES_DAYANCH96_TEXT" = "機能: \"YouTube Reborn v5 Menu\", \"Red Progress Bar\", \"Gray Buffer Progress\", \"Stick Navigation Bar\", \"Disable Double tap to skip\"";
+"FEATURES_DAYANCH96_TEXT" = "機能: \"YouTube Reborn v5 Menu\", \"Clear Cache\", \"Red Progress Bar\", \"Gray Buffer Progress\", \"Stick Navigation Bar\", \"Disable Double tap to seek\"";
 "FEATURES_POOMSMART_TEXT" = "機能: \"YouTube Reborn Button under Video Player\", \"YouTube-X/Adblock\", \"AutoPlay In Fullscreen\"";
 "FEATURES_NGUYEASANG_TEXT" = "機能: \"YouTube Reborn Button under Video Player\"";
 "FEATURES_NSNOOLIE_TEXT" = "機能: \"Enable Extra Video Speed\"";

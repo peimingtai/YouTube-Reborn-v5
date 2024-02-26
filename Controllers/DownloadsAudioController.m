@@ -17,8 +17,16 @@
     [super viewDidLoad];
     [self coloursView];
 
+    AVAudioSession *audioSession = [AVAudioSession sharedInstance];
+    NSError *error = nil;
+    [audioSession setCategory:AVAudioSessionCategoryPlayback error:&error];
+    if (error) {
+        NSLog(@"Failed to set audio session category: %@", error);
+    }
+
     self.searchBar = [[UISearchBar alloc] initWithFrame:CGRectMake(0, 0, CGRectGetWidth(self.view.frame), 44)];
     self.searchBar.delegate = self;
+    self.searchBar.placeholder = LOC(@"SEARCH_TEXT");
 
     UIBarButtonItem *searchButton = [[UIBarButtonItem alloc] initWithCustomView:self.searchBar];
     self.navigationItem.rightBarButtonItem = searchButton;
@@ -38,7 +46,7 @@
     self.tableView.delegate = self;
     [self.view addSubview:self.tableView];
     [self setupAudioArrays];
-    
+
     [NSLayoutConstraint activateConstraints:@[
         [self.tableView.centerXAnchor constraintEqualToAnchor:self.view.centerXAnchor],
         [self.tableView.centerYAnchor constraintEqualToAnchor:self.view.centerYAnchor],
@@ -55,19 +63,42 @@
     [searchBar resignFirstResponder];
 }
 
+- (void)searchBar:(UISearchBar *)searchBar textDidChange:(NSString *)searchText {
+    if (searchText.length == 0) {
+        searchBar.text = @"";
+        self.filteredItems = [NSArray array];
+        self.isSearching = NO;
+        [self.tableView reloadData];
+    }
+}
+
 - (void)searchBarSearchButtonClicked:(UISearchBar *)searchBar {
     [searchBar resignFirstResponder];
     NSString *searchText = searchBar.text;
-
+    
     if (searchText.length > 0) {
-        NSPredicate *predicate = [NSPredicate predicateWithFormat:@"SELF BEGINSWITH[cd] %@", searchText];
-        self.filteredItems = [self.allItems filteredArrayUsingPredicate:predicate];
+        NSMutableArray *filteredItems = [[NSMutableArray alloc] init];
+        
+        for (NSString *filename in self.allItems) {
+            NSString *filenameWithoutExtension = [[filename lastPathComponent] stringByDeletingPathExtension];
+            
+            if ([filenameWithoutExtension rangeOfString:searchText options:NSCaseInsensitiveSearch].location != NSNotFound) {
+                [filteredItems addObject:filename];
+            }
+        }
+        
+        self.filteredItems = [NSArray arrayWithArray:filteredItems];
         self.isSearching = YES;
     } else {
         self.filteredItems = [NSArray array];
         self.isSearching = NO;
     }
+    
     [self.tableView reloadData];
+}
+
+- (void)scrollViewWillBeginDragging:(UIScrollView *)scrollView {
+    [self.searchBar resignFirstResponder];
 }
 
 - (NSInteger)numberOfSectionsInTableView:(UITableView *)tableView {
@@ -83,34 +114,38 @@
 }
 
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath {
-    static NSString *CellIdentifier = @"AudioDownloadsTableViewCell";
-    UITableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:CellIdentifier];
-
+    UITableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:@"cell"];
     if (cell == nil) {
-        cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleSubtitle reuseIdentifier:nil];
-        cell.textLabel.adjustsFontSizeToFitWidth = YES;
-        cell.detailTextLabel.adjustsFontSizeToFitWidth = YES;
-        cell.accessoryType = UITableViewCellAccessoryDetailDisclosureButton;
-        if (self.traitCollection.userInterfaceStyle == UIUserInterfaceStyleLight) {
-            cell.backgroundColor = [UIColor colorWithRed:1.0 green:1.0 blue:1.0 alpha:1.0];
-            cell.textLabel.textColor = [UIColor blackColor];
-            cell.detailTextLabel.textColor = [UIColor blackColor];
-        }
-        else {
-            cell.backgroundColor = [UIColor colorWithRed:0.110 green:0.110 blue:0.118 alpha:1.0];
-            cell.textLabel.textColor = [UIColor whiteColor];
-	    cell.textLabel.shadowColor = [UIColor blackColor];
-            cell.textLabel.shadowOffset = CGSizeMake(1.0, 1.0);
-            cell.detailTextLabel.textColor = [UIColor whiteColor];
-        }
+        cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleSubtitle reuseIdentifier:@"cell"];
     }
-    cell.textLabel.text = [filePathsAudioArray objectAtIndex:indexPath.row];
-    @try {
-        NSString *artworkFileName = filePathsAudioArtworkArray[indexPath.row];
-        cell.imageView.image = [UIImage imageNamed:[NSString stringWithFormat:@"%@", [documentsDirectory stringByAppendingPathComponent:artworkFileName]]];
+    NSString *filename;
+    if (self.isSearching) {
+        filename = self.filteredItems[indexPath.row];
+    } else {
+        filename = self.allItems[indexPath.row];
     }
-    @catch (NSException *exception) {
+
+    if (indexPath.section == 0 && indexPath.row < filePathsAudioArray.count) {
+        cell.textLabel.text = [filePathsAudioArray[indexPath.row] stringByDeletingPathExtension];
+        cell.textLabel.numberOfLines = 0;
+        cell.textLabel.textColor = [UIColor whiteColor];
+        cell.backgroundColor = [[UIColor grayColor] colorWithAlphaComponent:0.25];
+        documentsDirectory = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES)[0];
+
+        NSString *imageName = [NSString stringWithFormat:@"%@.png", [filePathsAudioArray[indexPath.row] stringByDeletingPathExtension]];
+        UIImage *image = [UIImage imageWithContentsOfFile:[documentsDirectory stringByAppendingPathComponent:imageName]];
+        CGFloat targetSize = 37.5;
+        CGFloat scaleFactor = targetSize / MAX(image.size.width, image.size.height);
+        CGSize scaledSize = CGSizeMake(image.size.width * scaleFactor, image.size.height * scaleFactor);
+        UIGraphicsBeginImageContextWithOptions(scaledSize, NO, 0.0);
+        [[UIBezierPath bezierPathWithRoundedRect:CGRectMake(0, 0, scaledSize.width, scaledSize.height) cornerRadius:6] addClip];
+        [image drawInRect:CGRectMake(0, 0, scaledSize.width, scaledSize.height)];
+        UIImage *roundedImage = UIGraphicsGetImageFromCurrentImageContext();
+        UIGraphicsEndImageContext();
+        roundedImage = [roundedImage imageWithRenderingMode:UIImageRenderingModeAlwaysOriginal];
+        cell.imageView.image = roundedImage;
     }
+
     return cell;
 }
 
@@ -119,7 +154,7 @@
 
     NSString *currentFileName = filePathsAudioArray[indexPath.row];
     NSString *filePath = [documentsDirectory stringByAppendingPathComponent:currentFileName];
-    
+
     AVPlayerViewController *playerViewController = [AVPlayerViewController new];
     playerViewController.player = [AVPlayer playerWithURL:[NSURL fileURLWithPath:filePath]];
     playerViewController.allowsPictureInPicturePlayback = NO;
@@ -131,32 +166,92 @@
     [self presentViewController:playerViewController animated:YES completion:nil];
 }
 
-- (void)tableView:(UITableView *)tableView accessoryButtonTappedForRowWithIndexPath:(NSIndexPath *)indexPath {
-    NSString *currentAudioFileName = filePathsAudioArray[indexPath.row];
-    NSString *currentArtworkFileName = filePathsAudioArtworkArray[indexPath.row];
+- (UISwipeActionsConfiguration *)tableView:(UITableView *)tableView trailingSwipeActionsConfigurationForRowAtIndexPath:(NSIndexPath *)indexPath {
+    UIContextualAction *moreAction = [UIContextualAction contextualActionWithStyle:UIContextualActionStyleNormal
+                                                                             title:LOC(@"MORE_TEXT")
+                                                                           handler:^(UIContextualAction *action, __kindof UIView *sourceView, void (^completionHandler)(BOOL)) {
+        NSString *currentAudioFileName = filePathsAudioArray[indexPath.row];
+        NSString *currentArtworkFileName = filePathsAudioArtworkArray[indexPath.row];
 
-    UIAlertController *alertMenu = [UIAlertController alertControllerWithTitle:LOC(@"OPTIONS_TEXT") message:nil preferredStyle:UIAlertControllerStyleAlert];
+        UIAlertController *alertMenu = [UIAlertController alertControllerWithTitle:LOC(@"OPTIONS_TEXT") message:nil preferredStyle:UIAlertControllerStyleAlert];
 
-    [alertMenu addAction:[UIAlertAction actionWithTitle:LOC(@"DELETE_AUDIO") style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
-        [[NSFileManager defaultManager] removeItemAtPath:[documentsDirectory stringByAppendingPathComponent:currentAudioFileName] error:nil];
-        [[NSFileManager defaultManager] removeItemAtPath:[documentsDirectory stringByAppendingPathComponent:currentArtworkFileName] error:nil];
+        [alertMenu addAction:[UIAlertAction actionWithTitle:LOC(@"EDIT_FILE_NAME") style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
 
-        UIAlertController *alertDeleted = [UIAlertController alertControllerWithTitle:LOC(@"NOTICE_TEXT") message:LOC(@"AUDIO_DELETED") preferredStyle:UIAlertControllerStyleAlert];
-
-        [alertDeleted addAction:[UIAlertAction actionWithTitle:LOC(@"OKAY_TEXT") style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
-            [filePathsAudioArray removeAllObjects];
-            [filePathsAudioArtworkArray removeAllObjects];
-            [self setupAudioArrays];
-            [self.tableView reloadData];
+            UIAlertController *editAlert = [UIAlertController alertControllerWithTitle:LOC(@"EDIT_FILE_NAME") message:nil preferredStyle:UIAlertControllerStyleAlert];
+            
+            [editAlert addTextFieldWithConfigurationHandler:^(UITextField *textField) {
+                textField.placeholder = currentAudioFileName;
+                textField.text = [currentAudioFileName stringByDeletingPathExtension];
+            }];
+            
+            [editAlert addAction:[UIAlertAction actionWithTitle:LOC(@"SAVE_TEXT") style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
+                UITextField *textField = editAlert.textFields.firstObject;
+                NSString *newFileName = textField.text;
+                
+                NSString *newAudioFileName = [[newFileName stringByAppendingString:@"."] stringByAppendingString:[currentAudioFileName pathExtension]];
+                NSString *newArtworkFileName = [[newFileName stringByAppendingString:@"."] stringByAppendingString:[currentArtworkFileName pathExtension]];
+                
+                [[NSFileManager defaultManager] moveItemAtPath:[documentsDirectory stringByAppendingPathComponent:currentAudioFileName] toPath:[documentsDirectory stringByAppendingPathComponent:newAudioFileName] error:nil];
+                [[NSFileManager defaultManager] moveItemAtPath:[documentsDirectory stringByAppendingPathComponent:currentArtworkFileName] toPath:[documentsDirectory stringByAppendingPathComponent:newArtworkFileName] error:nil];
+                
+                [filePathsAudioArray replaceObjectAtIndex:indexPath.row withObject:newAudioFileName];
+                [filePathsAudioArtworkArray replaceObjectAtIndex:indexPath.row withObject:newArtworkFileName];
+                [self.tableView reloadData];
+            }]];
+            
+            [editAlert addAction:[UIAlertAction actionWithTitle:LOC(@"CANCEL_TEXT") style:UIAlertActionStyleCancel handler:nil]];
+            
+            [self presentViewController:editAlert animated:YES completion:nil];
         }]];
 
-        [self presentViewController:alertDeleted animated:YES completion:nil];
-    }]];
+        [alertMenu addAction:[UIAlertAction actionWithTitle:LOC(@"IMPORT_TO_DOWNLOADS") style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
+            NSString *currentAudioFileName = filePathsAudioArray[indexPath.row];
+            NSArray *downloadsDirectories = NSSearchPathForDirectoriesInDomains(NSDownloadsDirectory, NSUserDomainMask, YES);
+            NSString *downloadsDirectory = [downloadsDirectories firstObject];
 
-    [alertMenu addAction:[UIAlertAction actionWithTitle:LOC(@"CANCEL_TEXT") style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
-    }]];
+            NSString *newAudioFilePath = [downloadsDirectory stringByAppendingPathComponent:currentAudioFileName];
+    
+            if ([[NSFileManager defaultManager] fileExistsAtPath:newAudioFilePath]) {
+                UIAlertController *alert = [UIAlertController alertControllerWithTitle:LOC(@"IMPORT_ERROR") message:LOC(@"FILE_ALREADY_IMPORTED") preferredStyle:UIAlertControllerStyleAlert];
+                [alert addAction:[UIAlertAction actionWithTitle:LOC(@"OKAY_TEXT") style:UIAlertActionStyleDefault handler:nil]];
+                [self presentViewController:alert animated:YES completion:nil];
+            } else {
+                [[NSFileManager defaultManager] copyItemAtPath:[documentsDirectory stringByAppendingPathComponent:currentAudioFileName] toPath:newAudioFilePath error:nil];
+        
+                UIAlertController *alert = [UIAlertController alertControllerWithTitle:LOC(@"SUCCESSFULLY_IMPORTED_FILE") message:LOC(@"FILE_IMPORTED") preferredStyle:UIAlertControllerStyleAlert];
+                [alert addAction:[UIAlertAction actionWithTitle:LOC(@"OKAY_TEXT") style:UIAlertActionStyleDefault handler:nil]];
+                [self presentViewController:alert animated:YES completion:nil];
+            }
+        }]];
 
-    [self presentViewController:alertMenu animated:YES completion:nil];
+        [alertMenu addAction:[UIAlertAction actionWithTitle:LOC(@"DELETE_AUDIO") style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
+            [[NSFileManager defaultManager] removeItemAtPath:[documentsDirectory stringByAppendingPathComponent:currentAudioFileName] error:nil];
+            [[NSFileManager defaultManager] removeItemAtPath:[documentsDirectory stringByAppendingPathComponent:currentArtworkFileName] error:nil];
+
+            UIAlertController *alertDeleted = [UIAlertController alertControllerWithTitle:LOC(@"NOTICE_TEXT") message:LOC(@"AUDIO_DELETED") preferredStyle:UIAlertControllerStyleAlert];
+
+            [alertDeleted addAction:[UIAlertAction actionWithTitle:LOC(@"OKAY_TEXT") style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
+                [filePathsAudioArray removeAllObjects];
+                [filePathsAudioArtworkArray removeAllObjects];
+                [self setupAudioArrays];
+                [self.tableView reloadData];
+            }]];
+
+            [self presentViewController:alertDeleted animated:YES completion:nil];
+        }]];
+
+        [alertMenu addAction:[UIAlertAction actionWithTitle:LOC(@"CANCEL_TEXT") style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
+        }]];
+
+        [self presentViewController:alertMenu animated:YES completion:nil];
+    }];
+    moreAction.image = [UIImage systemImageNamed:@"ellipsis"];
+    moreAction.backgroundColor = self.view.traitCollection.userInterfaceStyle == UIUserInterfaceStyleDark ? [UIColor systemBlueColor] : [[UIColor systemBlueColor] colorWithAlphaComponent:0.8];
+
+    UISwipeActionsConfiguration *configuration = [UISwipeActionsConfiguration configurationWithActions:@[moreAction]];
+    configuration.performsFirstActionWithFullSwipe = NO;
+
+    return configuration;
 }
 
 - (void)setupAudioArrays {
@@ -190,10 +285,6 @@
     [super traitCollectionDidChange:previousTraitCollection];
     [self coloursView];
     [self.tableView reloadData];
-}
-
-- (void)viewWillAppear:(BOOL)animated {
-    [super viewWillAppear:animated];
 }
 
 @end

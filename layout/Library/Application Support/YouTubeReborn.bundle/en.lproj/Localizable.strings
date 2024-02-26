@@ -1,8 +1,12 @@
 // Actions/Prompts
+"SEARCH_TEXT" = "Search";
 "CANCEL_TEXT" = "Cancel";
 "RESET_TEXT" = "Reset";
 "SAVE_TEXT" = "Save";
 "OKAY_TEXT" = "Okay";
+"YES_TEXT" = "Yes";
+"NO_TEXT" = "No";
+"MORE_TEXT" = "More";
 "NOTICE_TEXT" = "Notice";
 "COLOR_SAVED" = "Color Saved";
 "IMPORT_VIDEO" = "Import Video To Camera Roll";
@@ -12,6 +16,7 @@
 "APPLY_TEXT" = "Apply";
 
 // Downloads
+"ALL_TAB" = "All";
 "VIDEO_TAB" = "Video";
 "AUDIO_TAB" = "Audio";
 "DOWNLOAD_NOTICE" = "Don't Exit The App\nThis will automatically close on completion";
@@ -26,12 +31,26 @@
 "PROGRESS_TEXT" = "Progress: %.02f%%";
 "DOWNLOAD_AUDIO" = "Download Audio";
 "DOWNLOAD_VIDEO" = "Download Video";
+"EDIT_FILE_NAME" = "Edit File Name";
+"IMPORT_TO_DOWNLOADS" = "Import to Downloads";
+"IMPORT_ERROR" = "File failed to Import!";
+"FILE_ALREADY_IMPORTED" = "❔The file has already been imported to the Downloads folder.";
+"SUCCESSFULLY_IMPORTED_FILE" = "File Successfully Imported!";
+"FILE_IMPORTED" = "✅ The file has successfully been imported to the Downloads folder.";
 "PLAY_APP_TEXT" = "Play In External App";
 "CHOOSE_TEXT" = "Choose App";
 "INFUSE_TEXT" = "Play In Infuse";
 "VLC_TEXT" = "Play In VLC";
 "DOWNLOAD_NOTICE_TEXT" = "Please Pause The Video Before Continuing";
 "DOWNLOAD_FILES_TEXT" = "Download Audio or Video Files";
+
+// Color Options
+"COLOR_OPTIONS" = "Color Options";
+
+"CUSTOM_THEME_TAB" = "Custom Theme";
+"CUSTOM_TINT_TAB" = "Custom Tint";
+"CUSTOM_SYSTEMBLUE_TAB" = "Custom SystemBlue";
+"CUSTOM_PROGRESS_BAR_TAB" = "Custom Progress Bar";
 
 // Video Options
 "VIDEO_OPTIONS" = "Video Options";
@@ -56,6 +75,17 @@
 "VALUE_TEXT" = "Value (Seconds): %.lf";
 "DISABLE_PREMIUM_TEXT" = "This feature has been disabled cause you have the 'I Have YouTube Premium' option enabled";
 "ALWAYS_SHOW_BAR_TEXT" = "You must enable 'Disable Related Videos In Overlay' and 'Hide Overlay Quick Actions' in YouTube Reborn settings to use 'Always Show Player Bar'";
+
+// Video Player Options
+"VIDEO_PLAYER_OPTIONS" = "Video Player Options";
+
+"HIDE_CONNECT_PLAYER_BUTTON" = "Hide 'Connect' Button under Video Player";
+"HIDE_SHARE_PLAYER_BUTTON" = "Hide 'Share' Button under Video Player";
+"HIDE_REMIX_PLAYER_BUTTON" = "Hide 'Remix' Button under Video Player";
+"HIDE_THANKS_PLAYER_BUTTON" = "Hide 'Thanks' Button under Video Player";
+"HIDE_DOWNLOAD_PLAYER_BUTTON" = "Hide 'Download' Button under Video Player";
+"HIDE_CLIP_PLAYER_BUTTON" = "Hide 'Clip' Button under Video Player";
+"HIDE_SAVE_PLAYER_BUTTON" = "Hide 'Save' Button under Video Player";
 
 // Overlay Options
 "OVERLAY_OPTIONS" = "Overlay Options";
@@ -98,9 +128,6 @@
 "HIDE_SUBSCRIPTIONS_TAB" = "Hide Subscriptions Tab";
 "HIDE_YOU_TAB" = "Hide You Tab";
 "REORDER_TABS" = "Reorder Tabs";
-"COLOR_OPTIONS" = "Color Options - Custom Theme";
-"COLOR_OPTIONS_2" = "Color Options - Custom Texts/Icons";
-"COLOR_OPTIONS_3" = "Color Options - Custom Progress Bar";
 
 // Picture In Picture Options
 "PICTURE_IN_PICTURE_OPTIONS" = "Picture In Picture Options";
@@ -145,6 +172,15 @@
 "PREVIEW" = "Preview";
 "FILLER" = "Filler Tangent/Jokes";
 "MUSIC_AND_OFFTOPIC" = "Music/OffTopic";
+"WOULD_YOU_LIKE_TO_SKIP" = "Would you like to skip?";
+"SPONSOR_DETECTED" = "Sponsor Detected";
+"SELFPROMO_DETECTED" = "Selfpromo Detected";
+"INTERACTION_DETECTED" = "Interaction Detected";
+"INTRO_DETECTED" = "Intro Detected";
+"OUTRO_DETECTED" = "Outro Detected";
+"PREVIEW_DETECTED" = "Preview Detected";
+"FILLER_DETECTED" = "Filler Detected";
+"MUSIC_OFFTOPIC_DETECTED" = "Music or offtopic Detected";
 
 // Other Options
 "OTHER_OPTIONS" = "Other Options";
@@ -168,11 +204,12 @@
 "REBORN_SETTINGS" = "Reborn Settings";
 
 "I_HAVE_YOUTUBE_PREMIUM" = "I Have YouTube Premium";
-"HIDE_PLAYER_OVERLAY_OP_BUTTON" = "Hide Player Overlay 'OP' Button";
+"HIDE_PLAYER_OVERLAY_OP_BUTTON" = "Hide 'OP' Button under Video Player";
 "HIDE_VIDEO_OVERLAY_OP_BUTTON" = "Hide Video Overlay 'OP' Button";
 "HIDE_SHORTS_OVERLAY_OP_BUTTON" = "Hide Shorts Overlay 'OP' Button";
 "RESET_COLOR_OPTIONS" = "Reset Color Options";
 "RESET_YOUTUBE_REBORN_OPTIONS" = "Reset All YouTube Reborn Options";
+"RESET_CACHE" = "Clear Cache";
 "RESET_COLOR_TEXT" = "Are you sure you want to reset all your set colors?";
 "RESET_OPTIONS_TEXT" = "Are you sure you want to reset all your options?";
 
@@ -181,7 +218,7 @@
 "DEVELOPER_TEXT" = "Developer";
 "ICON_DESIGNER_TEXT" = "Icon Designer";
 "DEV_SUPPORT_TEXT" = "Development Support";
-"FEATURES_DAYANCH96_TEXT" = "Features: \"YouTube Reborn v5 Menu\", \"Red Progress Bar\", \"Gray Buffer Progress\", \"Stick Navigation Bar\", \"Disable Double tap to skip\"";
+"FEATURES_DAYANCH96_TEXT" = "Features: \"YouTube Reborn v5 Menu\", \"Clear Cache\", \"Red Progress Bar\", \"Gray Buffer Progress\", \"Stick Navigation Bar\", \"Disable Double tap to seek\"";
 "FEATURES_POOMSMART_TEXT" = "Features: \"YouTube Reborn Button under Video Player\", \"YouTube-X/Adblock\", \"AutoPlay In Fullscreen\"";
 "FEATURES_NGUYEASANG_TEXT" = "Features: \"YouTube Reborn Button under Video Player\"";
 "FEATURES_NSNOOLIE_TEXT" = "Features: \"Enable Extra Video Speed\"";
