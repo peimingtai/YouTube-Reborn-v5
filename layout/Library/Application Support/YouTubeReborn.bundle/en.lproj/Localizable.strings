@@ -8,6 +8,7 @@
 "NO_TEXT" = "No";
 "MORE_TEXT" = "More";
 "NOTICE_TEXT" = "Notice";
+"WARNING_TEXT" = "Warning";
 "COLOR_SAVED" = "Color Saved";
 "IMPORT_VIDEO" = "Import Video To Camera Roll";
 "SAVED_VIDEO" = "Video Saved To Camera Roll";
@@ -32,11 +33,14 @@
 "DOWNLOAD_AUDIO" = "Download Audio";
 "DOWNLOAD_VIDEO" = "Download Video";
 "EDIT_FILE_NAME" = "Edit File Name";
-"IMPORT_TO_DOWNLOADS" = "Import to Downloads";
+"IMPORT_FILE" = "Import File";
+"EXPORT_FILE" = "Export File";
 "IMPORT_ERROR" = "File failed to Import!";
-"FILE_ALREADY_IMPORTED" = "❔The file has already been imported to the Downloads folder.";
-"SUCCESSFULLY_IMPORTED_FILE" = "File Successfully Imported!";
-"FILE_IMPORTED" = "✅ The file has successfully been imported to the Downloads folder.";
+"EXPORT_ERROR" = "File failed to Export!";
+"FILE_ALREADY_IMPORTED" = "The file has already been Imported?";
+"FILE_ALREADY_EXPORTED" = "The file has already been Exported?";
+"SUCCESSFULLY_IMPORTED_FILE" = "File has Successfully Imported!";
+"SUCCESSFULLY_EXPORTED_FILE" = "File has Successfully Exported!";
 "PLAY_APP_TEXT" = "Play In External App";
 "CHOOSE_TEXT" = "Choose App";
 "INFUSE_TEXT" = "Play In Infuse";
@@ -46,11 +50,14 @@
 
 // Color Options
 "COLOR_OPTIONS" = "Color Options";
+"COLOR_OPTIONS_2" = "Tint Color";
+"COLOR_OPTIONS_3" = "SystemBlue Color";
+"COLOR_OPTIONS_4" = "Progreess Bar Colour";
 
-"CUSTOM_THEME_TAB" = "Custom Theme";
-"CUSTOM_TINT_TAB" = "Custom Tint";
-"CUSTOM_SYSTEMBLUE_TAB" = "Custom SystemBlue";
-"CUSTOM_PROGRESS_BAR_TAB" = "Custom Progress Bar";
+"CUSTOM_THEME_TAB" = "Theme";
+"CUSTOM_TINT_TAB" = "Tint";
+"CUSTOM_SYSTEMBLUE_TAB" = "SystemBlue";
+"CUSTOM_PROGRESS_BAR_TAB" = "Progress Bar";
 
 // Video Options
 "VIDEO_OPTIONS" = "Video Options";
@@ -66,6 +73,8 @@
 "DISABLE_VIDEO_AUTOPLAY" = "Disable Video Autoplay";
 "RED_PROGRESS_BAR" = "Red Progress Bar";
 "GRAY_BUFFER_PROGRESS" = "Gray Buffer Progress";
+"HIDE_COLLAPSE_BUTTON" = "Hide Collapse Button";
+"HIDE_FULLSCREEN_BUTTON" = "Hide Fullscreen Button";
 "HIDE_PLAYER_BAR_HEATWAVE" = "Hide Player Bar Heatwave";
 "ALWAYS_SHOW_PLAYER_BAR" = "Always Show Player Bar";
 "ENABLE_EXTRA_SPEED_OPTIONS" = "Enable Extra Speed Options";

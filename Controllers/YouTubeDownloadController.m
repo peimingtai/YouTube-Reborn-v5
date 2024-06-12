@@ -1,18 +1,24 @@
-#import "YouTubeDownloadController.h"
 #import "Localization.h"
+#import "YouTubeDownloadController.h"
+#import "MBProgressHUD/MBProgressHUD.h"
+#import "../MobileFFmpeg/MobileFFmpegConfig.h"
 #import "../MobileFFmpeg/MobileFFmpeg.h"
+#import "../MobileFFmpeg/MobileFFprobe.h"
 #import "../AFNetworking/AFNetworking.h"
 
 @interface YouTubeDownloadController () {
+    Statistics *statistics;
     UIImageView *artworkImage;
     UILabel *titleLabel;
     UILabel *downloadPercentLabel;
     UILabel *noticeLabel;
 }
+@property (nonatomic, strong) MBProgressHUD *hud;
 - (void)coloursView;
 - (void)videoDownloaderPartOne;
 - (void)videoDownloaderPartTwo;
 - (void)audioDownloader;
+- (void)cancelDownload:(UIButton *)sender;
 @end
 
 @implementation YouTubeDownloadController
@@ -22,9 +28,21 @@
 
     [self.navigationController setNavigationBarHidden:YES animated:NO];
 
+    UIWindow *boundsWindow = [[[UIApplication sharedApplication] windows] firstObject];
+
+    cancelButton = [UIButton buttonWithType:UIButtonTypeSystem];
+    cancelButton.frame = CGRectMake(self.view.bounds.size.width - 100, boundsWindow.safeAreaInsets.top + 20, 80, 40);
+    [cancelButton setTitle:LOC(@"Cancel") forState:UIControlStateNormal];
+    [cancelButton addTarget:self action:@selector(cancelDownload:) forControlEvents:UIControlEventTouchUpInside];
+    [self.view addSubview:cancelButton];
+
     [self coloursView];
 
-    UIWindow *boundsWindow = [[[UIApplication sharedApplication] windows] firstObject];
+    CGRect contentViewFrame = CGRectMake(50, 100, self.view.bounds.size.width - 100, self.view.bounds.size.height - 200);
+    UIView *contentView = [[UIView alloc] initWithFrame:contentViewFrame];
+    contentView.backgroundColor = [UIColor colorWithWhite:1 alpha:0.8];
+    contentView.layer.cornerRadius = 20.0;
+    [self.view addSubview:contentView];
 
     artworkImage = [[UIImageView alloc] initWithFrame:CGRectMake(0, boundsWindow.safeAreaInsets.top, self.view.bounds.size.width, 300)];
     UIImage *artwork = [UIImage imageWithData:[NSData dataWithContentsOfURL:self.artworkURL]];
@@ -72,11 +90,6 @@
 
 - (void)viewDidLoad {
     [super viewDidLoad];
-    self.view.layer.borderWidth = 1.0;
-    self.view.layer.borderColor = [UIColor blackColor].CGColor;
-    self.view.layer.cornerRadius = 10.0;
-    self.view.layer.masksToBounds = YES;
-    self.view.layer.maskedCorners = kCALayerMaxXMinYCorner | kCALayerMinXMinYCorner;
     self.modalInPresentation = YES;
 
     if (self.downloadOption == 0) {
@@ -208,8 +221,14 @@
     }
 }
 
-- (void)viewWillAppear:(BOOL)animated {
-    [super viewWillAppear:animated];
+- (void)cancelDownload:(UIButton *)sender {
+    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+        [MobileFFmpeg cancel];
+    });
+}
+
+- (void)cancelHUD:(UIButton *)sender {
+    [self.hud hideAnimated:YES];
 }
 
 @end

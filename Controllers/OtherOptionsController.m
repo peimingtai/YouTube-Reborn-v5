@@ -1,8 +1,26 @@
 #import "OtherOptionsController.h"
 #import "Localization.h"
 
+#define BOOL_FOR_KEY(KEY) [[NSUserDefaults standardUserDefaults] boolForKey:KEY]
+#define SET_BOOL_FOR_KEY(KEY, VALUE) [[NSUserDefaults standardUserDefaults] setBool:VALUE forKey:KEY]; [[NSUserDefaults standardUserDefaults] synchronize];
+
+#define TOGGLE_SETTING(KEY, SENDER) \
+if ([SENDER isOn]) { \
+    SET_BOOL_FOR_KEY(KEY, YES); \
+} else { \
+    SET_BOOL_FOR_KEY(KEY, NO); \
+}
+
+#define CREATE_SWITCH(NAME, SELECTOR, KEY) \
+UISwitch *NAME = [[UISwitch alloc] initWithFrame:CGRectZero]; \
+[NAME addTarget:self action:@selector(SELECTOR:) forControlEvents:UIControlEventValueChanged]; \
+NAME.on = BOOL_FOR_KEY(KEY);\
+cell.accessoryView = NAME;
+
+//
 @interface OtherOptionsController ()
 - (void)coloursView;
+- (void)showVersionAlert;
 @end
 
 @implementation OtherOptionsController
@@ -66,113 +84,90 @@
             cell.detailTextLabel.textColor = [UIColor whiteColor];
         }
         cell.selectionStyle = UITableViewCellSelectionStyleNone;
-        UISwitch *appVersionSpoofer; // App Version Spoofer Declaration
-        if (indexPath.row == 0) {
-            cell.textLabel.text = LOC(@"IPAD_LAYOUT");
-            UISwitch *enableiPadStyleOniPhone = [[UISwitch alloc] initWithFrame:CGRectZero];
-            [enableiPadStyleOniPhone addTarget:self action:@selector(toggleEnableiPadStyleOniPhone:) forControlEvents:UIControlEventValueChanged];
-            enableiPadStyleOniPhone.on = [[NSUserDefaults standardUserDefaults] boolForKey:@"kEnableiPadStyleOniPhone"];
-            cell.accessoryView = enableiPadStyleOniPhone;
-        }
-        if (indexPath.row == 1) {
-            cell.textLabel.text = LOC(@"IPHONE_LAYOUT");
-            UISwitch *enableiPhoneStyleOniPad = [[UISwitch alloc] initWithFrame:CGRectZero];
-            [enableiPhoneStyleOniPad addTarget:self action:@selector(toggleEnableiPhoneStyleOniPad:) forControlEvents:UIControlEventValueChanged];
-            enableiPhoneStyleOniPad.on = [[NSUserDefaults standardUserDefaults] boolForKey:@"kEnableiPhoneStyleOniPad"];
-            cell.accessoryView = enableiPhoneStyleOniPad;
-        }
-        if (indexPath.row == 2) {
-            cell.textLabel.text = LOC(@"HIDE_CAST_BUTTON");
-            UISwitch *noCastButton = [[UISwitch alloc] initWithFrame:CGRectZero];
-            [noCastButton addTarget:self action:@selector(toggleNoCastButton:) forControlEvents:UIControlEventValueChanged];
-            noCastButton.on = [[NSUserDefaults standardUserDefaults] boolForKey:@"kNoCastButton"];
-            cell.accessoryView = noCastButton;
-        }
-        if (indexPath.row == 3) {
-            cell.textLabel.text = LOC(@"HIDE_NOTIFICATION_BUTTON");
-            UISwitch *noNotificationButton = [[UISwitch alloc] initWithFrame:CGRectZero];
-            [noNotificationButton addTarget:self action:@selector(toggleNoNotificationButton:) forControlEvents:UIControlEventValueChanged];
-            noNotificationButton.on = [[NSUserDefaults standardUserDefaults] boolForKey:@"kNoNotificationButton"];
-            cell.accessoryView = noNotificationButton;
-        }
-        if (indexPath.row == 4) {
-            cell.textLabel.text = LOC(@"HIDE_SEARCH_BUTTON");
-            UISwitch *noSearchButton = [[UISwitch alloc] initWithFrame:CGRectZero];
-            [noSearchButton addTarget:self action:@selector(toggleNoSearchButton:) forControlEvents:UIControlEventValueChanged];
-            noSearchButton.on = [[NSUserDefaults standardUserDefaults] boolForKey:@"kNoSearchButton"];
-            cell.accessoryView = noSearchButton;
-        }
-         if (indexPath.row == 5) {
-            cell.textLabel.text = LOC(@"HIDE_PLAY_NEXT_IN_QUEUE");
-            UISwitch *hidePlayNextInQueue = [[UISwitch alloc] initWithFrame:CGRectZero];
-            [hidePlayNextInQueue addTarget:self action:@selector(toggleHidePlayNextInQueue:) forControlEvents:UIControlEventValueChanged];
-            hidePlayNextInQueue.on = [[NSUserDefaults standardUserDefaults] boolForKey:@"kHidePlayNextInQueue"];
-            cell.accessoryView = hidePlayNextInQueue;
-        }
-        if (indexPath.row == 6) {
-            cell.textLabel.text = LOC(@"DISABLE_YOUTUBE_KIDS");
-            UISwitch *disableYouTubeKidsPopup = [[UISwitch alloc] initWithFrame:CGRectZero];
-            [disableYouTubeKidsPopup addTarget:self action:@selector(toggleDisableYouTubeKidsPopup:) forControlEvents:UIControlEventValueChanged];
-            disableYouTubeKidsPopup.on = [[NSUserDefaults standardUserDefaults] boolForKey:@"kDisableYouTubeKidsPopup"];
-            cell.accessoryView = disableYouTubeKidsPopup;
-        }
-        if (indexPath.row == 7) {
-            cell.textLabel.text = LOC(@"DISABLE_HINTS");
-            UISwitch *disableHints = [[UISwitch alloc] initWithFrame:CGRectZero];
-            [disableHints addTarget:self action:@selector(toggleDisableHints:) forControlEvents:UIControlEventValueChanged];
-            disableHints.on = [[NSUserDefaults standardUserDefaults] boolForKey:@"kDisableHints"];
-            cell.accessoryView = disableHints;
-        }
-        if (indexPath.row == 8) {
-            cell.textLabel.text = LOC(@"PREMIUM_YOUTUBE_LOGO");
-            UISwitch *premiumYouTubeLogo = [[UISwitch alloc] initWithFrame:CGRectZero];
-            [premiumYouTubeLogo addTarget:self action:@selector(togglePremiumYouTubeLogo:) forControlEvents:UIControlEventValueChanged];
-            premiumYouTubeLogo.on = [[NSUserDefaults standardUserDefaults] boolForKey:@"kPremiumYouTubeLogo"];
-            cell.accessoryView = premiumYouTubeLogo;
-	}
-        if (indexPath.row == 9) {
-            cell.textLabel.text = LOC(@"HIDE_YOUTUBE_LOGO");
-            UISwitch *hideYouTubeLogo = [[UISwitch alloc] initWithFrame:CGRectZero];
-            [hideYouTubeLogo addTarget:self action:@selector(toggleHideYouTubeLogo:) forControlEvents:UIControlEventValueChanged];
-            hideYouTubeLogo.on = [[NSUserDefaults standardUserDefaults] boolForKey:@"kHideYouTubeLogo"];
-            cell.accessoryView = hideYouTubeLogo;
-	}
-         if (indexPath.row == 10) {
-            cell.textLabel.text = LOC(@"STICK_NAVIGATION_BAR");
-            UISwitch *stickNavigationBar = [[UISwitch alloc] initWithFrame:CGRectZero];
-            [stickNavigationBar addTarget:self action:@selector(toggleStickNavigationBar:) forControlEvents:UIControlEventValueChanged];
-            stickNavigationBar.on = [[NSUserDefaults standardUserDefaults] boolForKey:@"kStickNavigationBar"];
-            cell.accessoryView = stickNavigationBar;
-	}
-        if (indexPath.row == 11) {
-            cell.textLabel.text = LOC(@"AUTO_HIDE_HOME_BAR");
-            UISwitch *autoHideHomeBar = [[UISwitch alloc] initWithFrame:CGRectZero];
-            [autoHideHomeBar addTarget:self action:@selector(toggleAutoHideHomeBar:) forControlEvents:UIControlEventValueChanged];
-            autoHideHomeBar.on = [[NSUserDefaults standardUserDefaults] boolForKey:@"kAutoHideHomeBar"];
-            cell.accessoryView = autoHideHomeBar;
-        }
+    if (indexPath.row == 0) {
+        cell.textLabel.text = LOC(@"IPAD_LAYOUT");
+        CREATE_SWITCH(enableiPadStyleOniPhone, toggleEnableiPadStyleOniPhone, @"kEnableiPadStyleOniPhone");
+    }
+    if (indexPath.row == 1) {
+        cell.textLabel.text = LOC(@"IPHONE_LAYOUT");
+        CREATE_SWITCH(enableiPhoneStyleOniPad, toggleEnableiPhoneStyleOniPad, @"kEnableiPhoneStyleOniPad");
+    }
+    if (indexPath.row == 2) {
+        cell.textLabel.text = LOC(@"HIDE_CAST_BUTTON");
+        CREATE_SWITCH(noCastButton, toggleNoCastButton, @"kNoCastButton");
+    }
+    if (indexPath.row == 3) {
+        cell.textLabel.text = LOC(@"HIDE_NOTIFICATION_BUTTON");
+        CREATE_SWITCH(noNotificationButton, toggleNoNotificationButton, @"kNoNotificationButton");
+    }
+    if (indexPath.row == 4) {
+        cell.textLabel.text = LOC(@"HIDE_SEARCH_BUTTON");
+        CREATE_SWITCH(noSearchButton, toggleNoSearchButton, @"kNoSearchButton");
+    }
+    if (indexPath.row == 5) {
+        cell.textLabel.text = LOC(@"HIDE_PLAY_NEXT_IN_QUEUE");
+        CREATE_SWITCH(hidePlayNextInQueue, toggleHidePlayNextInQueue, @"kHidePlayNextInQueue");
+    }
+    if (indexPath.row == 6) {
+        cell.textLabel.text = LOC(@"DISABLE_YOUTUBE_KIDS");
+        CREATE_SWITCH(disableYouTubeKidsPopup, toggleDisableYouTubeKidsPopup, @"kDisableYouTubeKidsPopup");
+    }
+    if (indexPath.row == 7) {
+        cell.textLabel.text = LOC(@"DISABLE_HINTS");
+        CREATE_SWITCH(disableHints, toggleDisableHints, @"kDisableHints");
+    }
+    if (indexPath.row == 8) {
+        cell.textLabel.text = LOC(@"PREMIUM_YOUTUBE_LOGO");
+        CREATE_SWITCH(premiumYouTubeLogo, togglePremiumYouTubeLogo, @"kPremiumYouTubeLogo");
+    }
+    if (indexPath.row == 9) {
+        cell.textLabel.text = LOC(@"HIDE_YOUTUBE_LOGO");
+        CREATE_SWITCH(hideYouTubeLogo, toggleHideYouTubeLogo, @"kHideYouTubeLogo");
+    }
+    if (indexPath.row == 10) {
+        cell.textLabel.text = LOC(@"STICK_NAVIGATION_BAR");
+        CREATE_SWITCH(stickNavigationBar, toggleStickNavigationBar, @"kStickNavigationBar");
+    }
+    if (indexPath.row == 11) {
+        cell.textLabel.text = LOC(@"AUTO_HIDE_HOME_BAR");
+        CREATE_SWITCH(autoHideHomeBar, toggleAutoHideHomeBar, @"kAutoHideHomeBar");
+    }
     if (indexPath.row == 12) {
         cell.textLabel.text = LOC(@"APP_VERSION_SPOOFER");
-        UISwitch *appVersionSpoofer = [[UISwitch alloc] initWithFrame:CGRectZero];
-        [appVersionSpoofer addTarget:self action:@selector(toggleAppVersionSpoofer:) forControlEvents:UIControlEventValueChanged];
-        appVersionSpoofer.on = [[NSUserDefaults standardUserDefaults] boolForKey:@"kAppVersionSpoofer"];
-        cell.accessoryView = appVersionSpoofer;
-	}
+        CREATE_SWITCH(appVersionSpoofer, toggleAppVersionSpoofer, @"kAppVersionSpoofer");
+    }
     if (indexPath.row == 13) {
-        UITextField *versionTextField = [cell.contentView viewWithTag:123];
-        if (!versionTextField) {
-            versionTextField = [[UITextField alloc] initWithFrame:CGRectMake(cell.bounds.origin.x + cell.textLabel.frame.size.width + 20, 10, cell.bounds.size.width - cell.textLabel.frame.size.width - 30, cell.bounds.size.height - 20)];
-            versionTextField.placeholder = LOC(@"ENTER_CUSTOM_APP_VERSION");
-            versionTextField.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
-            versionTextField.enabled = appVersionSpoofer.isOn;
-            [versionTextField addTarget:self action:@selector(versionTextFieldChanged:) forControlEvents:UIControlEventEditingChanged];
-            versionTextField.tag = 123;
-            [cell.contentView addSubview:versionTextField];
-            self.versionTextField = versionTextField;
-	    }
-	}
+        cell.textLabel.text = LOC(@"ENTER_CUSTOM_APP_VERSION");
+        UIButton *alertViewButton = [UIButton buttonWithType:UIButtonTypeSystem];
+        [alertViewButton setTitle:LOC(@"ENTER_CUSTOM_APP_VERSION") forState:UIControlStateNormal];
+        [alertViewButton addTarget:self action:@selector(showVersionAlert) forControlEvents:UIControlEventTouchUpInside];
+        cell.accessoryView = alertViewButton;
+        }
     }
     return cell;
+}
+
+- (void)showVersionAlert {
+    UIAlertController *alert = [UIAlertController alertControllerWithTitle:LOC(@"ENTER_CUSTOM_APP_VERSION") message:nil preferredStyle:UIAlertControllerStyleAlert];
+    [alert addTextFieldWithConfigurationHandler:^(UITextField * _Nonnull textField) {
+        textField.placeholder = LOC(@"ENTER_CUSTOM_APP_VERSION");
+        textField.text = self.customAppVersion;
+        textField.enabled = BOOL_FOR_KEY(@"kAppVersionSpoofer");
+    }];
+    UIAlertAction *resetAction = [UIAlertAction actionWithTitle:LOC(@"RESET_TEXT") style:UIAlertActionStyleDestructive handler:^(UIAlertAction * _Nonnull action) {
+        UITextField *textField = alert.textFields.firstObject;
+        textField.text = @"";
+        self.customAppVersion = @"";
+    }];
+    UIAlertAction *saveAction = [UIAlertAction actionWithTitle:LOC(@"SAVE_TEXT") style:UIAlertActionStyleDefault handler:^(UIAlertAction * _Nonnull action) {
+        UITextField *textField = alert.textFields.firstObject;
+        self.customAppVersion = textField.text;
+    }];
+    UIAlertAction *closeAction = [UIAlertAction actionWithTitle:LOC(@"OKAY_TEXT") style:UIAlertActionStyleCancel handler:nil];
+    [alert addAction:resetAction];
+    [alert addAction:saveAction];
+    [alert addAction:closeAction];
+    [self presentViewController:alert animated:YES completion:nil];
 }
 
 - (void)coloursView {
@@ -194,23 +189,6 @@
     [self.tableView reloadData];
 }
 
-- (void)versionTextFieldChanged:(UITextField *)textField {
-    NSString *customVersion = textField.text;
-    NSCharacterSet *allowedCharacterSet = [NSCharacterSet characterSetWithCharactersInString:@"0123456789."];
-    NSCharacterSet *inputCharacterSet = [NSCharacterSet characterSetWithCharactersInString:customVersion];
-    if (![allowedCharacterSet isSupersetOfSet:inputCharacterSet] || customVersion.length < 7) {
-        textField.text = @"";
-        return;
-    }
-    if (customVersion.length >= 6) {
-        NSMutableString *mutableCustomVersion = [customVersion mutableCopy];
-        [mutableCustomVersion replaceCharactersInRange:NSMakeRange(2, 1) withString:@"."];
-        [mutableCustomVersion replaceCharactersInRange:NSMakeRange(5, 1) withString:@"."];
-        textField.text = mutableCustomVersion;
-    }
-    self.customAppVersion = textField.text;
-}
-
 @end
 
 @implementation OtherOptionsController (Privates)
@@ -220,133 +198,54 @@
 }
 
 - (void)toggleEnableiPadStyleOniPhone:(UISwitch *)sender {
-    if ([sender isOn]) {
-        [[NSUserDefaults standardUserDefaults] setBool:YES forKey:@"kEnableiPadStyleOniPhone"];
-        [[NSUserDefaults standardUserDefaults] synchronize];
-    } else {
-        [[NSUserDefaults standardUserDefaults] setBool:NO forKey:@"kEnableiPadStyleOniPhone"];
-        [[NSUserDefaults standardUserDefaults] synchronize];
-    }
+    TOGGLE_SETTING(@"kEnableiPadStyleOniPhone", sender);
 }
 
 - (void)toggleEnableiPhoneStyleOniPad:(UISwitch *)sender {
-    if ([sender isOn]) {
-        [[NSUserDefaults standardUserDefaults] setBool:YES forKey:@"kEnableiPhoneStyleOniPad"];
-        [[NSUserDefaults standardUserDefaults] synchronize];
-    } else {
-        [[NSUserDefaults standardUserDefaults] setBool:NO forKey:@"kEnableiPhoneStyleOniPad"];
-        [[NSUserDefaults standardUserDefaults] synchronize];
-    }
+    TOGGLE_SETTING(@"kEnableiPhoneStyleOniPad", sender);
 }
 
 - (void)toggleNoCastButton:(UISwitch *)sender {
-    if ([sender isOn]) {
-        [[NSUserDefaults standardUserDefaults] setBool:YES forKey:@"kNoCastButton"];
-        [[NSUserDefaults standardUserDefaults] synchronize];
-    } else {
-        [[NSUserDefaults standardUserDefaults] setBool:NO forKey:@"kNoCastButton"];
-        [[NSUserDefaults standardUserDefaults] synchronize];
-    }
+    TOGGLE_SETTING(@"kNoCastButton", sender);
 }
 
 - (void)toggleNoNotificationButton:(UISwitch *)sender {
-    if ([sender isOn]) {
-        [[NSUserDefaults standardUserDefaults] setBool:YES forKey:@"kNoNotificationButton"];
-        [[NSUserDefaults standardUserDefaults] synchronize];
-    } else {
-        [[NSUserDefaults standardUserDefaults] setBool:NO forKey:@"kNoNotificationButton"];
-        [[NSUserDefaults standardUserDefaults] synchronize];
-    }
+    TOGGLE_SETTING(@"kNoNotificationButton", sender);
 }
 
 - (void)toggleNoSearchButton:(UISwitch *)sender {
-    if ([sender isOn]) {
-        [[NSUserDefaults standardUserDefaults] setBool:YES forKey:@"kNoSearchButton"];
-        [[NSUserDefaults standardUserDefaults] synchronize];
-    } else {
-        [[NSUserDefaults standardUserDefaults] setBool:NO forKey:@"kNoSearchButton"];
-        [[NSUserDefaults standardUserDefaults] synchronize];
-    }
+    TOGGLE_SETTING(@"kNoSearchButton", sender);
 }
 
 - (void)toggleHidePlayNextInQueue:(UISwitch *)sender {
-    if ([sender isOn]) {
-        [[NSUserDefaults standardUserDefaults] setBool:YES forKey:@"kHidePlayNextInQueue"];
-        [[NSUserDefaults standardUserDefaults] synchronize];
-    } else {
-        [[NSUserDefaults standardUserDefaults] setBool:NO forKey:@"kHidePlayNextInQueue"];
-        [[NSUserDefaults standardUserDefaults] synchronize];
-    }
+    TOGGLE_SETTING(@"kHidePlayNextInQueue", sender);
 }
 
 - (void)toggleDisableYouTubeKidsPopup:(UISwitch *)sender {
-    if ([sender isOn]) {
-        [[NSUserDefaults standardUserDefaults] setBool:YES forKey:@"kDisableYouTubeKidsPopup"];
-        [[NSUserDefaults standardUserDefaults] synchronize];
-    } else {
-        [[NSUserDefaults standardUserDefaults] setBool:NO forKey:@"kDisableYouTubeKidsPopup"];
-        [[NSUserDefaults standardUserDefaults] synchronize];
-    }
+    TOGGLE_SETTING(@"kDisableYouTubeKidsPopup", sender);
 }
 
 - (void)toggleDisableHints:(UISwitch *)sender {
-    if ([sender isOn]) {
-        [[NSUserDefaults standardUserDefaults] setBool:YES forKey:@"kDisableHints"];
-        [[NSUserDefaults standardUserDefaults] synchronize];
-    } else {
-        [[NSUserDefaults standardUserDefaults] setBool:NO forKey:@"kDisableHints"];
-        [[NSUserDefaults standardUserDefaults] synchronize];
-    }
+    TOGGLE_SETTING(@"kDisableHints", sender);
 }
 
 - (void)togglePremiumYouTubeLogo:(UISwitch *)sender {
-    if ([sender isOn]) {
-        [[NSUserDefaults standardUserDefaults] setBool:YES forKey:@"kPremiumYouTubeLogo"];
-        [[NSUserDefaults standardUserDefaults] synchronize];
-    } else {
-        [[NSUserDefaults standardUserDefaults] setBool:NO forKey:@"kPremiumYouTubeLogo"];
-        [[NSUserDefaults standardUserDefaults] synchronize];
-    }
+    TOGGLE_SETTING(@"kPremiumYouTubeLogo", sender);
 }
 
 - (void)toggleHideYouTubeLogo:(UISwitch *)sender {
-    if ([sender isOn]) {
-        [[NSUserDefaults standardUserDefaults] setBool:YES forKey:@"kHideYouTubeLogo"];
-        [[NSUserDefaults standardUserDefaults] synchronize];
-    } else {
-        [[NSUserDefaults standardUserDefaults] setBool:NO forKey:@"kHideYouTubeLogo"];
-        [[NSUserDefaults standardUserDefaults] synchronize];
-    }
+    TOGGLE_SETTING(@"kHideYouTubeLogo", sender);
 }
 
 - (void)toggleStickNavigationBar:(UISwitch *)sender {
-    if ([sender isOn]) {
-        [[NSUserDefaults standardUserDefaults] setBool:YES forKey:@"kStickNavigationBar"];
-        [[NSUserDefaults standardUserDefaults] synchronize];
-    } else {
-        [[NSUserDefaults standardUserDefaults] setBool:NO forKey:@"kStickNavigationBar"];
-        [[NSUserDefaults standardUserDefaults] synchronize];
-    }
+    TOGGLE_SETTING(@"kStickNavigationBar", sender);
 }
 
 - (void)toggleAutoHideHomeBar:(UISwitch *)sender {
-    if ([sender isOn]) {
-        [[NSUserDefaults standardUserDefaults] setBool:YES forKey:@"kAutoHideHomeBar"];
-        [[NSUserDefaults standardUserDefaults] synchronize];
-    } else {
-        [[NSUserDefaults standardUserDefaults] setBool:NO forKey:@"kAutoHideHomeBar"];
-        [[NSUserDefaults standardUserDefaults] synchronize];
-    }
+    TOGGLE_SETTING(@"kAutoHideHomeBar", sender);
 }
 
 - (void)toggleAppVersionSpoofer:(UISwitch *)sender {
-    if ([sender isOn]) {
-        [[NSUserDefaults standardUserDefaults] setBool:YES forKey:@"kAppVersionSpoofer"];
-        [[NSUserDefaults standardUserDefaults] synchronize];
-    } else {
-        [[NSUserDefaults standardUserDefaults] setBool:NO forKey:@"kAppVersionSpoofer"];
-        [[NSUserDefaults standardUserDefaults] synchronize];
-    }
-    self.versionTextField.enabled = sender.isOn;
+    TOGGLE_SETTING(@"kAppVersionSpoofer", sender);
 }
 @end

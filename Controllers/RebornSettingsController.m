@@ -2,6 +2,8 @@
 #import "Localization.h"
 
 @interface RebornSettingsController ()
+@property (nonatomic, strong) NSData *exportedSettingsData;
+@property (nonatomic, strong) NSDictionary *importedSettingsDict;
 - (void)coloursView;
 @end
 
@@ -38,7 +40,7 @@
 }
 
 - (NSInteger)numberOfSectionsInTableView:(UITableView *)tableView {
-    return 4;
+    return 5;
 }
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section {
@@ -52,6 +54,9 @@
         return 1;
     }
     if (section == 3) {
+        return 2;
+    }
+    if (section == 4) {
         return 2;
     }
     return 0;
@@ -133,6 +138,18 @@
                 cell.accessoryType = UITableViewCellAccessoryDisclosureIndicator;
             }
         }
+    }
+    if (indexPath.section == 4) {
+        UITableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:@"ImportExportCell"];
+        if (cell == nil) {
+            cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleDefault reuseIdentifier:@"ImportExportCell"];
+            if (indexPath.row == 0) {
+                cell.textLabel.text = LOC(@"EXPORT_OPTIONS");
+            } else {
+                cell.textLabel.text = LOC(@"IMPORT_OPTIONS");
+            }
+        }
+        return cell;
     }
     return cell;
 }
@@ -223,7 +240,7 @@
   		[[NSUserDefaults standardUserDefaults] removeObjectForKey:@"kHideShareButton"];
     		[[NSUserDefaults standardUserDefaults] removeObjectForKey:@"kHideRemixButton"];
       		[[NSUserDefaults standardUserDefaults] removeObjectForKey:@"kHideThanksButton"];
-		[[NSUserDefaults standardUserDefaults] removeObjectForKey:@"kHideAddToOfflineButton"];
+		[[NSUserDefaults standardUserDefaults] removeObjectForKey:@"kHideDownloadButton"];
   		[[NSUserDefaults standardUserDefaults] removeObjectForKey:@"kHideClipButton"];
       		[[NSUserDefaults standardUserDefaults] removeObjectForKey:@"kHideSaveToPlaylistButton"];
                 [[NSUserDefaults standardUserDefaults] removeObjectForKey:@"kDisableDoubleTapToSkip"];
@@ -256,6 +273,8 @@
 	        [[NSUserDefaults standardUserDefaults] removeObjectForKey:@"kEnableiPhoneStyleOniPad"];
                 [[NSUserDefaults standardUserDefaults] removeObjectForKey:@"kRedProgressBar"];
                 [[NSUserDefaults standardUserDefaults] removeObjectForKey:@"kGrayBufferProgress"];
+                [[NSUserDefaults standardUserDefaults] removeObjectForKey:@"kHideCollapseButton"];
+                [[NSUserDefaults standardUserDefaults] removeObjectForKey:@"kHideFullscreenButton"];
                 [[NSUserDefaults standardUserDefaults] removeObjectForKey:@"kHidePlayerBarHeatwave"];
                 [[NSUserDefaults standardUserDefaults] removeObjectForKey:@"kHidePictureInPictureAdsBadge"];
                 [[NSUserDefaults standardUserDefaults] removeObjectForKey:@"kHidePictureInPictureSponsorBadge"];
@@ -295,6 +314,46 @@
             }]];
 
             [self presentViewController:alert animated:YES completion:nil];
+        }
+    }
+
+    if (indexPath.section == 4) {
+        if (indexPath.row == 0) {
+            NSDictionary *settingsDict = [[NSUserDefaults standardUserDefaults] dictionaryRepresentation];
+            NSError *error;
+            NSData *jsonData = [NSJSONSerialization dataWithJSONObject:settingsDict options:NSJSONWritingPrettyPrinted error:&error];
+
+            if (!jsonData) {
+                NSLog(@"Error exporting settings data: %@", error.localizedDescription);
+            } else {
+                NSString *filePath = [NSTemporaryDirectory() stringByAppendingPathComponent:@"exported_settings.json"];
+                BOOL success = [jsonData writeToFile:filePath options:NSDataWritingAtomic error:&error];
+                if (success) {
+                    NSLog(@"Export data saved to file: %@", filePath);
+                } else {
+                    NSLog(@"Error saving export data: %@", error.localizedDescription);
+                }
+            }
+        } else if (indexPath.row == 1) {
+            NSString *importedFilePath = [NSTemporaryDirectory() stringByAppendingPathComponent:@"exported_settings.json"];
+            NSData *importedData = [NSData dataWithContentsOfFile:importedFilePath];
+            
+            if (importedData) {
+                NSError *error;
+                NSDictionary *importedSettingsDict = [NSJSONSerialization JSONObjectWithData:importedData options:kNilOptions error:&error];
+                if (importedSettingsDict) {
+                    for (NSString *key in importedSettingsDict.allKeys) {
+                        [[NSUserDefaults standardUserDefaults] setObject:importedSettingsDict[key] forKey:key];
+                    }
+                    [[NSUserDefaults standardUserDefaults] synchronize];
+                    [self.tableView reloadData];
+                    NSLog(@"Imported settings successfully.");
+                } else {
+                    NSLog(@"Error parsing imported data: %@", error.localizedDescription);
+                }
+            } else {
+                NSLog(@"Error reading imported data from file.");
+            }
         }
     }
 }

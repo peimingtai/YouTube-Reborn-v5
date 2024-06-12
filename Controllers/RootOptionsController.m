@@ -13,6 +13,11 @@
 #import "RebornSettingsController.h"
 #import "CreditsController.h"
 #import "Localization.h"
+// snackbar & alert view
+#import "YouTubeHeader/YTAlertView.h"
+#import "YouTubeHeader/YTLabel.h"
+#import "YouTubeHeader/YTHUDMessage.h"
+#import "YouTubeHeader/GOOHUDManagerInternal.h"
 
 #define SYSTEM_VERSION_EQUAL_TO(v)                  ([[[UIDevice currentDevice] systemVersion] compare:v options:NSNumericSearch] == NSOrderedSame)
 #define SYSTEM_VERSION_GREATER_THAN(v)              ([[[UIDevice currentDevice] systemVersion] compare:v options:NSNumericSearch] == NSOrderedDescending)
@@ -31,6 +36,32 @@
     [self coloursView];
 
     self.title = LOC(@"YouTube Reborn");
+
+    NSString *requiredVersion = @"19.06.2";
+    NSString *currentVersion = [[[NSBundle mainBundle] infoDictionary] objectForKey:@"CFBundleShortVersionString"];
+
+if ([currentVersion compare:requiredVersion options:NSNumericSearch] == NSOrderedAscending) {
+    dispatch_async(dispatch_get_main_queue(), ^{
+         UIAlertController *alert = [UIAlertController alertControllerWithTitle:LOC(@"WARNING_TEXT") message:[NSString stringWithFormat:LOC(@"You are using the Client version %@. Please use at least version %@ or higher."), currentVersion, requiredVersion] preferredStyle:UIAlertControllerStyleAlert];
+        [alert addAction:[UIAlertAction actionWithTitle:LOC(@"OKAY_TEXT") style:UIAlertActionStyleDefault handler:^(UIAlertAction * _Nonnull action) {
+            [self.presentingViewController dismissViewControllerAnimated:YES completion:nil];
+        }]];
+        [self presentViewController:alert animated:YES completion:nil];
+    });
+    return;
+}
+
+/* implementation below uses YouTube's HUD but doesn't work due to linker error.
+    if ([currentVersion compare:requiredVersion options:NSNumericSearch] == NSOrderedAscending) {
+        dispatch_async(dispatch_get_main_queue(), ^{
+        YTHUDMessage *message = [YTHUDMessage messageWithText:[NSString stringWithFormat:@"You are using the Client version %@. Please use at least version %@ or higher.", currentVersion, requiredVersion]];
+        GOOHUDManagerInternal *manager = [GOOHUDManagerInternal sharedInstance];
+        [manager showMessageMainThread:message];
+        });
+        [self.presentingViewController dismissViewControllerAnimated:YES completion:nil];
+        return;
+    }
+*/
 
     self.searchBar = [[UISearchBar alloc] initWithFrame:CGRectMake(0, 0, CGRectGetWidth(self.view.frame), 44)];
     self.searchBar.delegate = self;
@@ -175,7 +206,7 @@
             }
             if (indexPath.row == 1) {
                 cell.textLabel.text = LOC(@"VIDEO_PLAYER_OPTIONS");
-		cell.imageView.image = [UIImage systemImageNamed:@"video"];
+		cell.imageView.image = [UIImage systemImageNamed:@"video.square"];
   		cell.imageView.tintColor = cell.textLabel.textColor;
             }
             if (indexPath.row == 2) {
@@ -195,7 +226,7 @@
             }
             if (indexPath.row == 5) {
                 cell.textLabel.text = LOC(@"SHORTS_OPTIONS");
-		cell.imageView.image = [UIImage systemImageNamed:@"video.square"];
+		cell.imageView.image = [UIImage systemImageNamed:@"play.rectangle.on.rectangle.circle.fill"];
   		cell.imageView.tintColor = cell.textLabel.textColor;
             }
             if (indexPath.row == 6) {
@@ -213,7 +244,7 @@
             }
             if (indexPath.row == 1) {
                 cell.textLabel.text = LOC(@"CREDITS_BUTTON");
-		cell.imageView.image = [UIImage systemImageNamed:@"star"];
+		cell.imageView.image = [UIImage systemImageNamed:@"star.fill"];
   		cell.imageView.tintColor = cell.textLabel.textColor;
             }
         }

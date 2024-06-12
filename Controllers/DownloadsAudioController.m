@@ -34,16 +34,17 @@
     self.isSearching = NO;
 
     UITableViewStyle style;
-        if (@available(iOS 13, *)) {
-            style = UITableViewStyleInsetGrouped;
-        } else {
-            style = UITableViewStyleGrouped;
-        }
+    if (@available(iOS 13, *)) {
+        style = UITableViewStyleInsetGrouped;
+    } else {
+        style = UITableViewStyleGrouped;
+    }
 
     self.tableView = [[UITableView alloc] initWithFrame:CGRectZero style:style];
     self.tableView.translatesAutoresizingMaskIntoConstraints = NO;
     self.tableView.dataSource = self;
     self.tableView.delegate = self;
+    self.tableView.interactions = @[ [[UIDropInteraction alloc] initWithDelegate:self] ];
     [self.view addSubview:self.tableView];
     [self setupAudioArrays];
 
@@ -77,17 +78,6 @@
     NSString *searchText = searchBar.text;
     
     if (searchText.length > 0) {
-        NSMutableArray *filteredItems = [[NSMutableArray alloc] init];
-        
-        for (NSString *filename in self.allItems) {
-            NSString *filenameWithoutExtension = [[filename lastPathComponent] stringByDeletingPathExtension];
-            
-            if ([filenameWithoutExtension rangeOfString:searchText options:NSCaseInsensitiveSearch].location != NSNotFound) {
-                [filteredItems addObject:filename];
-            }
-        }
-        
-        self.filteredItems = [NSArray arrayWithArray:filteredItems];
         self.isSearching = YES;
     } else {
         self.filteredItems = [NSArray array];
@@ -106,11 +96,7 @@
 }
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section {
-    if (self.isSearching) {
-        return self.filteredItems.count;
-    } else {
-        return self.allItems.count;
-    }
+    return self.isSearching ? self.filteredItems.count : self.allItems.count;
 }
 
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath {
@@ -118,15 +104,11 @@
     if (cell == nil) {
         cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleSubtitle reuseIdentifier:@"cell"];
     }
-    NSString *filename;
-    if (self.isSearching) {
-        filename = self.filteredItems[indexPath.row];
-    } else {
-        filename = self.allItems[indexPath.row];
-    }
+    NSString *fileName = self.isSearching ? self.filteredItems[indexPath.row] : self.allItems[indexPath.row];
 
     if (indexPath.section == 0 && indexPath.row < filePathsAudioArray.count) {
         cell.textLabel.text = [filePathsAudioArray[indexPath.row] stringByDeletingPathExtension];
+        cell.detailTextLabel.text = [NSString stringWithFormat:@"%@ - %@", [fileName pathExtension], [self getFileCreationDateAtIndex:indexPath.row]];
         cell.textLabel.numberOfLines = 0;
         cell.textLabel.textColor = [UIColor whiteColor];
         cell.backgroundColor = [[UIColor grayColor] colorWithAlphaComponent:0.25];
@@ -147,6 +129,16 @@
     }
 
     return cell;
+}
+
+- (NSString *)getFileCreationDateAtIndex:(NSInteger)index {
+    NSString *fileName = filePathsAudioArray[index];
+    NSString *filePath = [documentsDirectory stringByAppendingPathComponent:fileName];
+    NSDictionary *attributes = [[NSFileManager defaultManager] attributesOfItemAtPath:filePath error:nil];
+    NSDate *creationDate = [attributes objectForKey:NSFileCreationDate];
+    NSDateFormatter *formatter = [[NSDateFormatter alloc] init];
+    [formatter setDateFormat:@"yyyy-MM-dd HH:mm:ss"];
+    return [formatter stringFromDate:creationDate];
 }
 
 - (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath {
@@ -178,51 +170,40 @@
         [alertMenu addAction:[UIAlertAction actionWithTitle:LOC(@"EDIT_FILE_NAME") style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
 
             UIAlertController *editAlert = [UIAlertController alertControllerWithTitle:LOC(@"EDIT_FILE_NAME") message:nil preferredStyle:UIAlertControllerStyleAlert];
-            
+
             [editAlert addTextFieldWithConfigurationHandler:^(UITextField *textField) {
                 textField.placeholder = currentAudioFileName;
                 textField.text = [currentAudioFileName stringByDeletingPathExtension];
             }];
-            
+
             [editAlert addAction:[UIAlertAction actionWithTitle:LOC(@"SAVE_TEXT") style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
                 UITextField *textField = editAlert.textFields.firstObject;
                 NSString *newFileName = textField.text;
-                
+
                 NSString *newAudioFileName = [[newFileName stringByAppendingString:@"."] stringByAppendingString:[currentAudioFileName pathExtension]];
                 NSString *newArtworkFileName = [[newFileName stringByAppendingString:@"."] stringByAppendingString:[currentArtworkFileName pathExtension]];
-                
+
                 [[NSFileManager defaultManager] moveItemAtPath:[documentsDirectory stringByAppendingPathComponent:currentAudioFileName] toPath:[documentsDirectory stringByAppendingPathComponent:newAudioFileName] error:nil];
                 [[NSFileManager defaultManager] moveItemAtPath:[documentsDirectory stringByAppendingPathComponent:currentArtworkFileName] toPath:[documentsDirectory stringByAppendingPathComponent:newArtworkFileName] error:nil];
-                
+
                 [filePathsAudioArray replaceObjectAtIndex:indexPath.row withObject:newAudioFileName];
                 [filePathsAudioArtworkArray replaceObjectAtIndex:indexPath.row withObject:newArtworkFileName];
                 [self.tableView reloadData];
-            }]];
-            
+            }];
+
             [editAlert addAction:[UIAlertAction actionWithTitle:LOC(@"CANCEL_TEXT") style:UIAlertActionStyleCancel handler:nil]];
-            
+
             [self presentViewController:editAlert animated:YES completion:nil];
-        }]];
+        }];
 
-        [alertMenu addAction:[UIAlertAction actionWithTitle:LOC(@"IMPORT_TO_DOWNLOADS") style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
+        [alertMenu addAction:[UIAlertAction actionWithTitle:LOC(@"EXPORT_FILE") style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
             NSString *currentAudioFileName = filePathsAudioArray[indexPath.row];
-            NSArray *downloadsDirectories = NSSearchPathForDirectoriesInDomains(NSDownloadsDirectory, NSUserDomainMask, YES);
-            NSString *downloadsDirectory = [downloadsDirectories firstObject];
 
-            NSString *newAudioFilePath = [downloadsDirectory stringByAppendingPathComponent:currentAudioFileName];
-    
-            if ([[NSFileManager defaultManager] fileExistsAtPath:newAudioFilePath]) {
-                UIAlertController *alert = [UIAlertController alertControllerWithTitle:LOC(@"IMPORT_ERROR") message:LOC(@"FILE_ALREADY_IMPORTED") preferredStyle:UIAlertControllerStyleAlert];
-                [alert addAction:[UIAlertAction actionWithTitle:LOC(@"OKAY_TEXT") style:UIAlertActionStyleDefault handler:nil]];
-                [self presentViewController:alert animated:YES completion:nil];
-            } else {
-                [[NSFileManager defaultManager] copyItemAtPath:[documentsDirectory stringByAppendingPathComponent:currentAudioFileName] toPath:newAudioFilePath error:nil];
-        
-                UIAlertController *alert = [UIAlertController alertControllerWithTitle:LOC(@"SUCCESSFULLY_IMPORTED_FILE") message:LOC(@"FILE_IMPORTED") preferredStyle:UIAlertControllerStyleAlert];
-                [alert addAction:[UIAlertAction actionWithTitle:LOC(@"OKAY_TEXT") style:UIAlertActionStyleDefault handler:nil]];
-                [self presentViewController:alert animated:YES completion:nil];
-            }
-        }]];
+            UIDocumentPickerViewController *documentPicker = [[UIDocumentPickerViewController alloc] initWithDocumentTypes:@[@"public.audio"] inMode:UIDocumentPickerModeExportToService];
+            documentPicker.delegate = self;
+            documentPicker.title = currentAudioFileName.lastPathComponent;
+            [self presentViewController:documentPicker animated:YES completion:nil];
+        }];
 
         [alertMenu addAction:[UIAlertAction actionWithTitle:LOC(@"DELETE_AUDIO") style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
             [[NSFileManager defaultManager] removeItemAtPath:[documentsDirectory stringByAppendingPathComponent:currentAudioFileName] error:nil];
@@ -235,13 +216,12 @@
                 [filePathsAudioArtworkArray removeAllObjects];
                 [self setupAudioArrays];
                 [self.tableView reloadData];
-            }]];
+            }];
 
             [self presentViewController:alertDeleted animated:YES completion:nil];
-        }]];
+        }];
 
-        [alertMenu addAction:[UIAlertAction actionWithTitle:LOC(@"CANCEL_TEXT") style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
-        }]];
+        [alertMenu addAction:[UIAlertAction actionWithTitle:LOC(@"CANCEL_TEXT") style:UIAlertActionStyleCancel handler:nil]];
 
         [self presentViewController:alertMenu animated:YES completion:nil];
     }];
@@ -270,6 +250,46 @@
         }
     }
     self.allItems = [NSArray arrayWithArray:filePathsAudioArray];
+}
+
+- (void)documentPicker:(UIDocumentPickerViewController *)controller didPickDocumentsAtURLs:(NSArray<NSURL *> *)urls {
+    for (NSURL *url in urls) {
+        NSString *importedFileName = [url lastPathComponent];
+        NSString *newAudioFilePath = [documentsDirectory stringByAppendingPathComponent:importedFileName];
+
+        if ([[NSFileManager defaultManager] fileExistsAtPath:newAudioFilePath]) {
+            UIAlertController *alert = [UIAlertController alertControllerWithTitle:LOC(@"IMPORT_ERROR") message:LOC(@"FILE_ALREADY_IMPORTED") preferredStyle:UIAlertControllerStyleAlert];
+            [alert addAction:[UIAlertAction actionWithTitle:LOC(@"OKAY_TEXT") style:UIAlertActionStyleDefault handler:nil]];
+            [self presentViewController:alert animated:YES completion:nil];
+        } else {
+            [[NSFileManager defaultManager] copyItemAtURL:url toURL:[NSURL fileURLWithPath:newAudioFilePath] error:nil];
+
+            UIAlertController *alert = [UIAlertController alertControllerWithTitle:LOC(@"SUCCESSFULLY_IMPORTED_FILE") message:@"" preferredStyle:UIAlertControllerStyleAlert];
+            [alert addAction:[UIAlertAction actionWithTitle:LOC(@"OKAY_TEXT") style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
+                [self setupAudioArrays];
+                [self.tableView reloadData];
+            }];
+            [self presentViewController:alert animated:YES completion:nil];
+        }
+    }
+}
+
+- (void)exportFile {
+    NSIndexPath *selectedIndexPath = [self.tableView indexPathForSelectedRow];
+    if (selectedIndexPath) {
+        [self exportFileAtIndexPath:selectedIndexPath];
+    }
+}
+
+- (void)exportFileAtIndexPath:(NSIndexPath *)indexPath {
+    NSString *currentAudioFileName = filePathsAudioArray[indexPath.row];
+    NSString *filePath = [documentsDirectory stringByAppendingPathComponent:currentAudioFileName];
+
+    UIDocumentPickerViewController *documentPicker = [[UIDocumentPickerViewController alloc] initWithURL:[NSURL fileURLWithPath:filePath] inMode:UIDocumentPickerModeExportToService];
+    documentPicker.delegate = self;
+    documentPicker.title = currentAudioFileName.lastPathComponent;
+    documentPicker.modalPresentationStyle = UIModalPresentationFormSheet;
+    [self presentViewController:documentPicker animated:YES completion:nil];
 }
 
 - (void)coloursView {

@@ -8,6 +8,7 @@
 "NO_TEXT" = "No";
 "MORE_TEXT" = "More";
 "NOTICE_TEXT" = "Aviso";
+"WARNING_TEXT" = "Warning";
 "COLOR_SAVED" = "Color guardado";
 "IMPORT_VIDEO" = "Importar vídeo al carrete de la cámara";
 "SAVED_VIDEO" = "Vídeo guardado en el carrete";
@@ -31,12 +32,15 @@
 "PROGRESS_TEXT" = "Progreso: %.02f%%";
 "DOWNLOAD_AUDIO" = "Descargar audio";
 "DOWNLOAD_VIDEO" = "Descargar vídeo";
-"EDIT_FILE_NAME" = "Edit File Name";
-"IMPORT_TO_DOWNLOADS" = "Import to Downloads";
-"IMPORT_ERROR" = "File failed to Import!";
-"FILE_ALREADY_IMPORTED" = "❔The file has already been imported to the Downloads folder.";
-"SUCCESSFULLY_IMPORTED_FILE" = "File Successfully Imported!";
-"FILE_IMPORTED" = "✅ The file has successfully been imported to the Downloads folder.";
+"EDIT_FILE_NAME" = "Editar nombre de archivo";
+"IMPORT_FILE" = "Importar archivo";
+"EXPORT_FILE" = "Exportar archivo";
+"IMPORT_ERROR" = "Error al importar el archivo";
+"EXPORT_ERROR" = "Error al exportar el archivo";
+"FILE_ALREADY_IMPORTED" = "El archivo ya se ha importado";
+"FILE_ALREADY_EXPORTED" = "¿Ya se ha exportado el archivo?";
+"SUCCESSFULLY_IMPORTED_FILE" = "El archivo se ha importado correctamente";
+"SUCCESSFULLY_EXPORTED_FILE" = "¡El archivo se ha exportado correctamente!";
 "PLAY_APP_TEXT" = "Reproducir en una aplicación externa";
 "CHOOSE_TEXT" = "Elegir aplicación";
 "INFUSE_TEXT" = "Reproducir en Infuse";
@@ -46,6 +50,9 @@
 
 // Color Options
 "COLOR_OPTIONS" = "Opciones de color";
+"COLOR_OPTIONS_2" = "Tint Color";
+"COLOR_OPTIONS_3" = "SystemBlue Color";
+"COLOR_OPTIONS_4" = "Progreess Bar Colour";
 
 "CUSTOM_THEME_TAB" = "Tema personalizado";
 "CUSTOM_TINT_TAB" = "Tinte personalizado";
@@ -66,6 +73,8 @@
 "DISABLE_VIDEO_AUTOPLAY" = "Desactivar reproducción automática de vídeo";
 "RED_PROGRESS_BAR" = "Barra de progreso roja";
 "GRAY_BUFFER_PROGRESS" = "Progreso del búfer gris";
+"HIDE_COLLAPSE_BUTTON" = "Hide Collapse Button";
+"HIDE_FULLSCREEN_BUTTON" = "Hide Fullscreen Button";
 "HIDE_PLAYER_BAR_HEATWAVE" = "Ocultar Heatwave de la barra del reproductor";
 "ALWAYS_SHOW_PLAYER_BAR" = "Mostrar siempre la barra de reproductor";
 "ENABLE_EXTRA_SPEED_OPTIONS" = "Activar opciones de velocidad extra";

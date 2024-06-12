@@ -2,8 +2,9 @@
 #import <AVFoundation/AVFoundation.h>
 #import <AVKit/AVKit.h>
 #import <UIKit/UIKit.h>
+#import <MobileCoreServices/MobileCoreServices.h>
 
-@interface DownloadsAudioController : UIViewController <UITableViewDelegate, UITableViewDataSource, UISearchBarDelegate, UIScrollViewDelegate, AVPlayerViewControllerDelegate>
+@interface DownloadsAudioController : UIViewController <UITableViewDelegate, UITableViewDataSource, UISearchBarDelegate, UIScrollViewDelegate, UIDropInteractionDelegate, UIDocumentPickerDelegate, AVPlayerViewControllerDelegate>
 @property (nonatomic, strong) UITableView *tableView;
 @property (nonatomic, strong) UIImageView *imageView;
 @property (nonatomic, strong) UISearchBar *searchBar;
